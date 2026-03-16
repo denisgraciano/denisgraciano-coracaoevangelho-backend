@@ -50,6 +50,25 @@ public class CapituloRepository : ICapituloRepository
             .OrderBy(c => c.Numero)
             .AsNoTracking()
             .ToListAsync(ct);
+
+    // src/CoracaoEvangelho.API/Repositories/Repositories.cs
+    // Adicionar dentro de CapituloRepository
+
+    public async Task<IEnumerable<CapituloSumarioResponseDto>> GetSumarioByLivroIdAsync(
+        string livroId, CancellationToken ct = default)
+        => await _db.Capitulos
+            .Where(c => c.LivroId == livroId)
+            .OrderBy(c => c.Numero)
+            // Projeção direta no banco — evita carregar texto dos versículos em memória
+            .Select(c => new CapituloSumarioResponseDto(
+                c.Id,
+                c.LivroId,
+                c.Numero,
+                c.Titulo,
+                c.Versiculos.Count // traduzido para COUNT(*) pelo EF Core
+            ))
+            .AsNoTracking()
+            .ToListAsync(ct);
 }
 
 // ── VersiculoRepository ───────────────────────────────────────────────────

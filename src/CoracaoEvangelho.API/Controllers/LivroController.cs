@@ -65,6 +65,47 @@ public class LivroController : ControllerBase
         return Ok(ApiResponse<LivroResponseDto>.Ok(livro));
     }
 
+    /// <summary>
+    /// Retorna o sumário dos capítulos de um livro (sem versículos).
+    /// Ideal para montar o índice/sumário na tela /livros/:id.
+    /// </summary>
+    /// <remarks>
+    /// Por que esse endpoint existe separado de GET /api/livros/{id}/capitulos/{n}?
+    /// Carregar todos os versículos de todos os capítulos só para exibir o índice
+    /// seria inviável (alto volume de dados, prejudica o PWA offline).
+    /// Este endpoint retorna apenas metadados + contagem de versículos por capítulo.
+    ///
+    /// Exemplo de resposta:
+    /// ```json
+    /// {
+    ///   "success": true,
+    ///   "data": [
+    ///     { "id": "cap-1", "livroId": "livro-genesis", "numero": 1, "titulo": "A criação", "totalVersiculos": 31 },
+    ///     { "id": "cap-2", "livroId": "livro-genesis", "numero": 2, "titulo": "O jardim do Éden", "totalVersiculos": 25 }
+    ///   ],
+    ///   "message": "",
+    ///   "errors": []
+    /// }
+    /// ```
+    /// </remarks>
+    [HttpGet("{id}/capitulos")]
+    [SwaggerOperation(
+        Summary = "Sumário dos capítulos de um livro",
+        Description = "Retorna id, numero, titulo e totalVersiculos de cada capítulo. Não inclui o texto dos versículos.",
+        Tags = new[] { "Livros" })]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<CapituloSumarioResponseDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCapitulosSumario(string id, CancellationToken ct)
+    {
+        // Retorna null quando o livro não existe (lógica de negócio no Service)
+        var sumario = await _livroService.GetCapitulosSumarioAsync(id, ct);
+
+        if (sumario is null)
+            return NotFound(ApiResponse<object>.Fail("Livro não encontrado."));
+
+        return Ok(ApiResponse<IEnumerable<CapituloSumarioResponseDto>>.Ok(sumario));
+    }
+
     /// <summary>Retorna um capítulo específico com seus versículos.</summary>
     /// <remarks>
     /// Quando autenticado, o campo **isFavorito** em cada versículo reflete o estado real do usuário.

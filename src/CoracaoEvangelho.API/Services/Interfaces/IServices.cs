@@ -8,6 +8,7 @@ public interface ILivroService
     Task<IEnumerable<LivroResponseDto>> GetLivrosAsync(CancellationToken ct = default);
     Task<LivroResponseDto?> GetLivroByIdAsync(string id, CancellationToken ct = default);
     Task<CapituloResponseDto?> GetCapituloAsync(string livroId, int numero, string? usuarioId, CancellationToken ct = default);
+    Task<IEnumerable<CapituloSumarioResponseDto>?> GetCapitulosSumarioAsync(string livroId, CancellationToken ct = default);
 }
 
 public interface IVersiculoService

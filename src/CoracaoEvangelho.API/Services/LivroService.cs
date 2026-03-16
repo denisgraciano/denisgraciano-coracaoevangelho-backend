@@ -67,6 +67,17 @@ public class LivroService : ILivroService
             versiculos
         );
     }
+
+    public async Task<IEnumerable<CapituloSumarioResponseDto>?> GetCapitulosSumarioAsync(
+    string livroId, CancellationToken ct = default)
+    {
+        // Verifica se o livro existe antes de buscar capítulos
+        // Usa GetByIdAsync que já aplica o filtro Ativo=true
+        var livro = await _livroRepo.GetByIdAsync(livroId, ct);
+        if (livro is null) return null; // sinaliza 404 para o controller
+
+        return await _capituloRepo.GetSumarioByLivroIdAsync(livroId, ct);
+    }
 }
 
 // ── VersiculoService ──────────────────────────────────────────────────────
