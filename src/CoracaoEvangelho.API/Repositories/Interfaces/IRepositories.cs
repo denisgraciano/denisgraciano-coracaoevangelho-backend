@@ -27,6 +27,7 @@ public interface IDevocionalRepository
     Task<Devocional?> GetHojeAsync(CancellationToken ct = default);
     Task<IEnumerable<Devocional>> GetHistoricoAsync(int pagina, int tamanhoPagina, CancellationToken ct = default);
     Task<int> ContarHistoricoAsync(CancellationToken ct = default);
+    Task<Devocional?> GetMaisRecenteAsync(CancellationToken ct = default);
 }
 
 public interface IFavoritoRepository
@@ -48,3 +49,5 @@ public interface IUsuarioRepository
     Task AddAsync(Usuario usuario, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }
+
+

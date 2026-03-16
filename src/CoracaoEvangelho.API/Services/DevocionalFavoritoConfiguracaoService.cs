@@ -22,8 +22,14 @@ public class DevocionalService : IDevocionalService
     public async Task<DevocionalResponseDto?> GetHojeAsync(
         string? usuarioId, CancellationToken ct = default)
     {
+        // Tenta carregar o devocional de hoje
         var devocional = await _repo.GetHojeAsync(ct);
-        if (devocional is null) return null;
+
+        // Fallback: se não há devocional para hoje, usa o mais recente disponível.
+        // Garante que a home nunca fica sem versículo de destaque por ausência de cadastro.
+        devocional ??= await _repo.GetMaisRecenteAsync(ct);
+
+        if (devocional is null) return null; // banco vazio — edge case extremo
 
         return await MapDevocionalAsync(devocional, usuarioId, ct);
     }
@@ -48,6 +54,8 @@ public class DevocionalService : IDevocionalService
             TamanhoPagina = tamanhoPagina
         };
     }
+
+
 
     private async Task<DevocionalResponseDto> MapDevocionalAsync(
         Devocional d, string? usuarioId, CancellationToken ct)

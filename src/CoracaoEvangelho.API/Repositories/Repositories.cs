@@ -145,6 +145,14 @@ public class DevocionalRepository : IDevocionalRepository
 
     public async Task<int> ContarHistoricoAsync(CancellationToken ct = default)
         => await _db.Devocionais.CountAsync(ct);
+
+    public async Task<Devocional?> GetMaisRecenteAsync(CancellationToken ct = default)
+    => await _db.Devocionais
+        .Include(d => d.Versiculo)
+            .ThenInclude(v => v.Capitulo)
+        .OrderByDescending(d => d.Data)
+        .AsNoTracking()
+        .FirstOrDefaultAsync(ct);
 }
 
 // ── FavoritoRepository ────────────────────────────────────────────────────
