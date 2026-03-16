@@ -43,9 +43,11 @@ public interface IAuthService
     Task<AuthResponseDto> RegistrarAsync(RegisterRequestDto dto, CancellationToken ct = default);
     Task<AuthResponseDto> LoginAsync(LoginRequestDto dto, CancellationToken ct = default);
     Task<AuthResponseDto> RefreshTokenAsync(string refreshToken, CancellationToken ct = default);
+    Task<UsuarioResponseDto> GetMeAsync(string usuarioId, CancellationToken ct = default);
 }
 
 public interface ISyncService
 {
     Task<IEnumerable<SyncLivroDto>> GetLivrosSincronizadosAsync(DateTime atualizadoApos, CancellationToken ct = default);
 }
+

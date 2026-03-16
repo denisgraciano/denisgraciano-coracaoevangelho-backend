@@ -3,6 +3,8 @@ using CoracaoEvangelho.API.DTOs.Response;
 using CoracaoEvangelho.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Authorization;
+using CoracaoEvangelho.API.Extensions;
 
 namespace CoracaoEvangelho.API.Controllers;
 
@@ -65,5 +67,52 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.RefreshTokenAsync(dto.RefreshToken, ct);
         return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Token renovado com sucesso."));
+    }
+
+    /// <summary>
+    /// Retorna os dados do usuário autenticado.
+    /// Usado pelo Angular após refresh de token para re-hidratar nome e e-mail
+    /// no header/menu sem forçar novo login.
+    /// </summary>
+    /// <remarks>
+    /// Requer header: Authorization: Bearer {accessToken}
+    ///
+    /// Exemplo de resposta:
+    /// ```json
+    /// {
+    ///   "success": true,
+    ///   "data": {
+    ///     "id": "u1",
+    ///     "nome": "João Silva",
+    ///     "email": "joao@email.com",
+    ///     "role": "user"
+    ///   },
+    ///   "message": "",
+    ///   "errors": []
+    /// }
+    /// ```
+    ///
+    /// Contrato com Angular:
+    /// | Método | Rota          | Auth | Service Angular |
+    /// |--------|---------------|------|-----------------|
+    /// | GET    | /api/auth/me  | ✅   | AuthService     |
+    /// </remarks>
+    [HttpGet("me")]
+    [Authorize]  // ← JWT obrigatório: token ausente/inválido → 401 automaticamente
+    [SwaggerOperation(
+        Summary = "Dados do usuário autenticado",
+        Description = "Re-hidrata nome e e-mail após refresh de token. Sempre retorna dados atuais do banco.",
+        Tags = new[] { "Auth" })]
+    [ProducesResponseType(typeof(ApiResponse<UsuarioResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Me(CancellationToken ct)
+    {
+        // GetUserIdOrThrow() garante que o userId existe na claim — nunca null aqui
+        // porque [Authorize] já bloqueou o request antes de chegar nesta linha
+        var usuarioId = User.GetUserIdOrThrow();
+
+        var usuario = await _authService.GetMeAsync(usuarioId, ct);
+        return Ok(ApiResponse<UsuarioResponseDto>.Ok(usuario));
     }
 }

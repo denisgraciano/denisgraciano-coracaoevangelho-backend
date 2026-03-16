@@ -75,6 +75,18 @@ public class AuthService : IAuthService
         return GerarAuthResponse(usuario);
     }
 
+    public async Task<UsuarioResponseDto> GetMeAsync(
+    string usuarioId, CancellationToken ct = default)
+    {
+        // Busca o usuário no banco pelo ID que veio na claim do JWT
+        // GetByIdAsync já existe no UsuarioRepository — sem query nova
+        var usuario = await _usuarioRepo.GetByIdAsync(usuarioId, ct)
+            ?? throw new KeyNotFoundException("Usuário não encontrado.");
+
+        // Retorna apenas id, nome, email, role — SenhaHash nunca exposto
+        return new UsuarioResponseDto(usuario.Id, usuario.Nome, usuario.Email, usuario.Role);
+    }
+
     // ── Helpers privados ───────────────────────────────────────────────────
 
     private AuthResponseDto GerarAuthResponse(Usuario usuario)
