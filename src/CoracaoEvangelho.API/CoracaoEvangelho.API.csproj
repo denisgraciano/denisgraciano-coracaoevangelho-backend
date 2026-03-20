@@ -6,37 +6,34 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>CoracaoEvangelho.API</RootNamespace>
     <AssemblyName>CoracaoEvangelho.API</AssemblyName>
+    <UserSecretsId>coracao-evangelho-api</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- EF Core + MySQL (Pomelo) -->
+    <!-- EF Core + MySQL -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.0" />
 
-    <!-- Autenticação JWT -->
+    <!-- JWT Auth -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
 
-    <!-- AutoMapper — versões alinhadas (12.x juntas evita NU1608) -->
-    <PackageReference Include="AutoMapper" Version="12.0.1" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <!-- Swagger -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
 
     <!-- FluentValidation -->
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
-
-    <!-- Swagger / OpenAPI + Annotations ([SwaggerOperation]) -->
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
 
     <!-- Serilog -->
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="5.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
 
-    <!-- BCrypt para hashing de senhas -->
+    <!-- BCrypt -->
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 

@@ -3,51 +3,59 @@ using CoracaoEvangelho.API.DTOs.Response;
 
 namespace CoracaoEvangelho.API.Services.Interfaces;
 
-public interface ILivroService
-{
-    Task<IEnumerable<LivroResponseDto>> GetLivrosAsync(CancellationToken ct = default);
-    Task<LivroResponseDto?> GetLivroByIdAsync(string id, CancellationToken ct = default);
-    Task<CapituloResponseDto?> GetCapituloAsync(string livroId, int numero, string? usuarioId, CancellationToken ct = default);
-    Task<IEnumerable<CapituloSumarioResponseDto>?> GetCapitulosSumarioAsync(string livroId, CancellationToken ct = default);
-}
-
-public interface IVersiculoService
-{
-    Task<PagedResultDto<VersiculoResponseDto>> PesquisarAsync(
-        string termo, string? livroId, int pagina, int tamanhoPagina,
-        string? usuarioId, CancellationToken ct = default);
-}
-
-public interface IDevocionalService
-{
-    Task<DevocionalResponseDto?> GetHojeAsync(string? usuarioId, CancellationToken ct = default);
-    Task<PagedResultDto<DevocionalResponseDto>> GetHistoricoAsync(int pagina, int tamanhoPagina, string? usuarioId, CancellationToken ct = default);
-}
-
-public interface IFavoritoService
-{
-    Task<IEnumerable<FavoritoResponseDto>> GetFavoritosAsync(string usuarioId, CancellationToken ct = default);
-    Task<FavoritoResponseDto> AdicionarAsync(string usuarioId, AdicionarFavoritoRequestDto dto, CancellationToken ct = default);
-    Task RemoverAsync(string usuarioId, string favoritoId, CancellationToken ct = default);
-}
-
-public interface IConfiguracaoService
-{
-    Task<ConfiguracaoResponseDto> GetConfiguracaoAsync(string usuarioId, CancellationToken ct = default);
-    Task<ConfiguracaoResponseDto> SetTemaAsync(string usuarioId, string tema, CancellationToken ct = default);
-    Task<ConfiguracaoResponseDto> SetFonteAsync(string usuarioId, int tamanhoFonte, CancellationToken ct = default);
-}
-
+// ── IAuthService ──────────────────────────────────────────────
 public interface IAuthService
 {
     Task<AuthResponseDto> RegistrarAsync(RegisterRequestDto dto, CancellationToken ct = default);
     Task<AuthResponseDto> LoginAsync(LoginRequestDto dto, CancellationToken ct = default);
     Task<AuthResponseDto> RefreshTokenAsync(string refreshToken, CancellationToken ct = default);
-    Task<UsuarioResponseDto> GetMeAsync(string usuarioId, CancellationToken ct = default);
 }
 
-public interface ISyncService
+// ── IUsuarioService ───────────────────────────────────────────
+public interface IUsuarioService
 {
-    Task<IEnumerable<SyncLivroDto>> GetLivrosSincronizadosAsync(DateTime atualizadoApos, CancellationToken ct = default);
+    Task<UsuarioResponseDto> GetPerfilAsync(string usuarioId, CancellationToken ct = default);
+    Task<UsuarioResponseDto> AtualizarPerfilAsync(string usuarioId, AtualizarPerfilRequestDto dto, CancellationToken ct = default);
+    Task AlterarSenhaAsync(string usuarioId, AlterarSenhaRequestDto dto, CancellationToken ct = default);
 }
 
+// ── ICursoService ─────────────────────────────────────────────
+public interface ICursoService
+{
+    Task<IEnumerable<CursoResumoResponseDto>> GetTodosAsync(CancellationToken ct = default);
+    Task<CursoResponseDto?> GetByIdAsync(string id, CancellationToken ct = default);
+    Task<IEnumerable<CursoResponseDto>> GetCursosMatriculadosAsync(string usuarioId, CancellationToken ct = default);
+    Task<IEnumerable<CursoResumoResponseDto>> GetSugestoesAsync(string usuarioId, CancellationToken ct = default);
+    Task<CursoResponseDto> CriarAsync(CursoRequestDto dto, CancellationToken ct = default);
+}
+
+// ── IMatriculaService ─────────────────────────────────────────
+public interface IMatriculaService
+{
+    Task<MatriculaResponseDto> InscreverAsync(string usuarioId, string cursoId, MatriculaRequestDto dto, CancellationToken ct = default);
+    Task<bool> EstaMatriculadoAsync(string usuarioId, string cursoId, CancellationToken ct = default);
+}
+
+// ── IProgressoService ─────────────────────────────────────────
+public interface IProgressoService
+{
+    Task<ProgressoCursoResponseDto> GetProgressoCursoAsync(string usuarioId, string cursoId, CancellationToken ct = default);
+    Task<ProgressoCursoResponseDto> MarcarAulaConcluidaAsync(string usuarioId, MarcarAulaConcluidaRequestDto dto, CancellationToken ct = default);
+}
+
+// ── ICertificadoService ───────────────────────────────────────
+public interface ICertificadoService
+{
+    Task<IEnumerable<CertificadoResponseDto>> GetByUsuarioAsync(string usuarioId, CancellationToken ct = default);
+    Task<CertificadoResponseDto?> GetByUsuarioCursoAsync(string usuarioId, string cursoId, CancellationToken ct = default);
+    Task<CertificadoResponseDto> EmitirAsync(string usuarioId, EmitirCertificadoRequestDto dto, CancellationToken ct = default);
+}
+
+// ── IPedidoVibracaoService ────────────────────────────────────
+public interface IPedidoVibracaoService
+{
+    Task<PedidoVibracaoResponseDto> EnviarAsync(string? usuarioId, PedidoVibracaoRequestDto dto, CancellationToken ct = default);
+
+    // Retorna PagedResultDto usando o DTO de admin — sem conflito com Model
+    Task<PagedResultDto<PedidoVibracaoAdminDto>> ListarAsync(int pagina, int tamanho, CancellationToken ct = default);
+}

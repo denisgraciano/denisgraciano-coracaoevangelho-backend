@@ -1,3 +1,8 @@
+// ============================================================
+// Data/AppDbContext.cs
+// Contexto EF Core para o domínio real (plataforma espírita)
+// ============================================================
+
 using CoracaoEvangelho.API.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,92 +12,139 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<Livro> Livros => Set<Livro>();
-    public DbSet<Capitulo> Capitulos => Set<Capitulo>();
-    public DbSet<Versiculo> Versiculos => Set<Versiculo>();
-    public DbSet<Devocional> Devocionais => Set<Devocional>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
-    public DbSet<Favorito> Favoritos => Set<Favorito>();
+    public DbSet<Categoria> Categorias => Set<Categoria>();
+    public DbSet<Curso> Cursos => Set<Curso>();
+    public DbSet<Aula> Aulas => Set<Aula>();
+    public DbSet<Matricula> Matriculas => Set<Matricula>();
+    public DbSet<Progresso> Progressos => Set<Progresso>();
+    public DbSet<Certificado> Certificados => Set<Certificado>();
+    public DbSet<PedidoVibracao> PedidosVibracao => Set<PedidoVibracao>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // ── Livro ─────────────────────────────────────────────────────────
-        modelBuilder.Entity<Livro>(e =>
-        {
-            e.HasKey(x => x.Id);
-            e.Property(x => x.Titulo).HasMaxLength(200).IsRequired();
-            e.Property(x => x.Subtitulo).HasMaxLength(300);
-            e.Property(x => x.Capa).HasMaxLength(500);
-            e.HasQueryFilter(x => !x.Deletado); // soft delete global
-        });
-
-        // ── Capitulo ──────────────────────────────────────────────────────
-        modelBuilder.Entity<Capitulo>(e =>
-        {
-            e.HasKey(x => x.Id);
-            e.Property(x => x.Titulo).HasMaxLength(200);
-            e.HasOne(x => x.Livro)
-             .WithMany(x => x.Capitulos)
-             .HasForeignKey(x => x.LivroId)
-             .OnDelete(DeleteBehavior.Cascade);
-            e.HasQueryFilter(x => !x.Deletado);
-            e.HasIndex(x => new { x.LivroId, x.Numero }).IsUnique();
-        });
-
-        // ── Versiculo ─────────────────────────────────────────────────────
-        modelBuilder.Entity<Versiculo>(e =>
-        {
-            e.HasKey(x => x.Id);
-            e.Property(x => x.Texto).HasColumnType("TEXT").IsRequired();
-            e.HasOne(x => x.Capitulo)
-             .WithMany(x => x.Versiculos)
-             .HasForeignKey(x => x.CapituloId)
-             .OnDelete(DeleteBehavior.Cascade);
-            e.HasQueryFilter(x => !x.Deletado);
-            e.HasIndex(x => new { x.CapituloId, x.Numero }).IsUnique();
-        });
-
-        // ── Devocional ────────────────────────────────────────────────────
-        modelBuilder.Entity<Devocional>(e =>
-        {
-            e.HasKey(x => x.Id);
-            e.Property(x => x.Passagem).HasMaxLength(200).IsRequired();
-            e.Property(x => x.Reflexao).HasColumnType("TEXT").IsRequired();
-            e.HasOne(x => x.Versiculo)
-             .WithMany()
-             .HasForeignKey(x => x.VersiculoId)
-             .OnDelete(DeleteBehavior.Restrict);
-            e.HasQueryFilter(x => !x.Deletado);
-            e.HasIndex(x => x.Data).IsUnique(); // 1 devocional por dia
-        });
-
-        // ── Usuario ───────────────────────────────────────────────────────
+        // ── Usuario ────────────────────────────────────────────
         modelBuilder.Entity<Usuario>(e =>
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.Email).HasMaxLength(200).IsRequired();
             e.Property(x => x.Nome).HasMaxLength(150).IsRequired();
             e.Property(x => x.SenhaHash).HasMaxLength(100).IsRequired();
-            e.Property(x => x.Role).HasMaxLength(50).HasDefaultValue("user");
+            e.Property(x => x.Role).HasMaxLength(20).HasDefaultValue("aluno");
+            e.Property(x => x.AvatarUrl).HasMaxLength(500);
             e.HasIndex(x => x.Email).IsUnique();
         });
 
-        // ── Favorito ──────────────────────────────────────────────────────
-        modelBuilder.Entity<Favorito>(e =>
+        // ── Categoria ──────────────────────────────────────────
+        modelBuilder.Entity<Categoria>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Nome).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Descricao).HasMaxLength(500);
+            e.Property(x => x.Icone).HasMaxLength(500);
+        });
+
+        // ── Curso ──────────────────────────────────────────────
+        modelBuilder.Entity<Curso>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Titulo).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Descricao).HasColumnType("TEXT").IsRequired();
+            e.Property(x => x.ImagemUrl).HasMaxLength(500);
+            e.Property(x => x.Instrutor).HasMaxLength(150);
+            e.HasOne(x => x.Categoria)
+             .WithMany(x => x.Cursos)
+             .HasForeignKey(x => x.CategoriaId)
+             .OnDelete(DeleteBehavior.SetNull);
+            e.HasQueryFilter(x => x.Ativo);  // soft delete via flag
+        });
+
+        // ── Aula ───────────────────────────────────────────────
+        modelBuilder.Entity<Aula>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Titulo).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Descricao).HasMaxLength(1000);
+            e.Property(x => x.YoutubeVideoId).HasMaxLength(50).IsRequired();
+            e.HasOne(x => x.Curso)
+             .WithMany(x => x.Aulas)
+             .HasForeignKey(x => x.CursoId)
+             .OnDelete(DeleteBehavior.Cascade);
+            // Garante que dois aluno não têm ordem igual no mesmo curso
+            e.HasIndex(x => new { x.CursoId, x.Ordem }).IsUnique();
+            e.HasQueryFilter(x => x.Ativa);
+        });
+
+        // ── Matricula ──────────────────────────────────────────
+        modelBuilder.Entity<Matricula>(e =>
         {
             e.HasKey(x => x.Id);
             e.HasOne(x => x.Usuario)
-             .WithMany(x => x.Favoritos)
+             .WithMany(x => x.Matriculas)
              .HasForeignKey(x => x.UsuarioId)
              .OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(x => x.Versiculo)
-             .WithMany(x => x.Favoritos)
-             .HasForeignKey(x => x.VersiculoId)
+            e.HasOne(x => x.Curso)
+             .WithMany(x => x.Matriculas)
+             .HasForeignKey(x => x.CursoId)
              .OnDelete(DeleteBehavior.Cascade);
-            // Impede duplicata: mesmo usuário + mesmo versículo
-            e.HasIndex(x => new { x.UsuarioId, x.VersiculoId }).IsUnique();
+            // Impede dupla matrícula no mesmo curso
+            e.HasIndex(x => new { x.UsuarioId, x.CursoId }).IsUnique();
+        });
+
+        // ── Progresso ──────────────────────────────────────────
+        modelBuilder.Entity<Progresso>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne(x => x.Usuario)
+             .WithMany(x => x.Progressos)
+             .HasForeignKey(x => x.UsuarioId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Aula)
+             .WithMany(x => x.Progressos)
+             .HasForeignKey(x => x.AulaId)
+             .OnDelete(DeleteBehavior.Cascade);
+            // Índice único: um progresso por usuário+aula
+            e.HasIndex(x => new { x.UsuarioId, x.AulaId }).IsUnique();
+            // Índice de cobertura para queries de progresso por curso
+            e.HasIndex(x => new { x.UsuarioId, x.CursoId });
+        });
+
+        // ── Certificado ────────────────────────────────────────
+        modelBuilder.Entity<Certificado>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.CursoTitulo).HasMaxLength(200).IsRequired();
+            e.Property(x => x.AlunoNome).HasMaxLength(150).IsRequired();
+            e.Property(x => x.CargaHoraria).HasColumnType("decimal(5,2)");
+            e.HasOne(x => x.Usuario)
+             .WithMany(x => x.Certificados)
+             .HasForeignKey(x => x.UsuarioId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Curso)
+             .WithMany()
+             .HasForeignKey(x => x.CursoId)
+             .OnDelete(DeleteBehavior.Restrict);  // nunca deletar curso com certificados
+            // Um certificado por usuário+curso
+            e.HasIndex(x => new { x.UsuarioId, x.CursoId }).IsUnique();
+        });
+
+        // ── PedidoVibracao ─────────────────────────────────────
+        modelBuilder.Entity<PedidoVibracao>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Nome).HasMaxLength(150).IsRequired();
+            e.Property(x => x.Email).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Pedido).HasColumnType("TEXT").IsRequired();
+            e.Property(x => x.Cep).HasMaxLength(10);
+            e.Property(x => x.Logradouro).HasMaxLength(300);
+            e.Property(x => x.Cidade).HasMaxLength(100);
+            e.Property(x => x.Estado).HasMaxLength(2);
+            e.HasOne(x => x.Usuario)
+             .WithMany(x => x.PedidosVibracao)
+             .HasForeignKey(x => x.UsuarioId)
+             .OnDelete(DeleteBehavior.SetNull);  // pedido sobrevive se usuario deletar conta
         });
     }
 }

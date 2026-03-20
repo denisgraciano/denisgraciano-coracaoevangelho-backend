@@ -5,222 +5,231 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CoracaoEvangelho.API.Repositories;
 
-// ── LivroRepository ───────────────────────────────────────────────────────
-public class LivroRepository : ILivroRepository
-{
-    private readonly AppDbContext _db;
-    public LivroRepository(AppDbContext db) => _db = db;
-
-    public async Task<IEnumerable<Livro>> GetAllAsync(CancellationToken ct = default)
-        => await _db.Livros
-            .Where(l => l.Ativo)
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-    public async Task<Livro?> GetByIdAsync(string id, CancellationToken ct = default)
-        => await _db.Livros
-            .Include(l => l.Capitulos.OrderBy(c => c.Numero))
-            .AsNoTracking()
-            .FirstOrDefaultAsync(l => l.Id == id, ct);
-
-    // Para sincronização offline — ignora o QueryFilter de Deletado
-    public async Task<IEnumerable<Livro>> GetAtualizadosAposAsync(DateTime data, CancellationToken ct = default)
-        => await _db.Livros
-            .IgnoreQueryFilters() // precisa ver registros deletados para sync
-            .Where(l => l.AtualizadoEm > data)
-            .AsNoTracking()
-            .ToListAsync(ct);
-}
-
-// ── CapituloRepository ────────────────────────────────────────────────────
-public class CapituloRepository : ICapituloRepository
-{
-    private readonly AppDbContext _db;
-    public CapituloRepository(AppDbContext db) => _db = db;
-
-    public async Task<Capitulo?> GetByLivroENumeroAsync(string livroId, int numero, CancellationToken ct = default)
-        => await _db.Capitulos
-            .Include(c => c.Versiculos.OrderBy(v => v.Numero))
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.LivroId == livroId && c.Numero == numero, ct);
-
-    public async Task<IEnumerable<Capitulo>> GetByLivroIdAsync(string livroId, CancellationToken ct = default)
-        => await _db.Capitulos
-            .Where(c => c.LivroId == livroId)
-            .OrderBy(c => c.Numero)
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-    // src/CoracaoEvangelho.API/Repositories/Repositories.cs
-    // Adicionar dentro de CapituloRepository
-
-    public async Task<IEnumerable<CapituloSumarioResponseDto>> GetSumarioByLivroIdAsync(
-        string livroId, CancellationToken ct = default)
-        => await _db.Capitulos
-            .Where(c => c.LivroId == livroId)
-            .OrderBy(c => c.Numero)
-            // Projeção direta no banco — evita carregar texto dos versículos em memória
-            .Select(c => new CapituloSumarioResponseDto(
-                c.Id,
-                c.LivroId,
-                c.Numero,
-                c.Titulo,
-                c.Versiculos.Count // traduzido para COUNT(*) pelo EF Core
-            ))
-            .AsNoTracking()
-            .ToListAsync(ct);
-}
-
-// ── VersiculoRepository ───────────────────────────────────────────────────
-public class VersiculoRepository : IVersiculoRepository
-{
-    private readonly AppDbContext _db;
-    public VersiculoRepository(AppDbContext db) => _db = db;
-
-    public async Task<IEnumerable<Versiculo>> PesquisarAsync(
-        string termo, string? livroId, int pagina, int tamanhoPagina,
-        CancellationToken ct = default)
-    {
-        var query = _db.Versiculos
-            .Include(v => v.Capitulo)
-            .Where(v => EF.Functions.Like(v.Texto, $"%{termo}%"));
-
-        // Filtro opcional por livro
-        if (!string.IsNullOrWhiteSpace(livroId))
-            query = query.Where(v => v.Capitulo.LivroId == livroId);
-
-        return await query
-            .OrderBy(v => v.Capitulo.Numero)
-            .ThenBy(v => v.Numero)
-            .Skip((pagina - 1) * tamanhoPagina)
-            .Take(tamanhoPagina)
-            .AsNoTracking()
-            .ToListAsync(ct);
-    }
-
-    public async Task<int> ContarPesquisaAsync(string termo, string? livroId, CancellationToken ct = default)
-    {
-        var query = _db.Versiculos
-            .Include(v => v.Capitulo)
-            .Where(v => EF.Functions.Like(v.Texto, $"%{termo}%"));
-
-        if (!string.IsNullOrWhiteSpace(livroId))
-            query = query.Where(v => v.Capitulo.LivroId == livroId);
-
-        return await query.CountAsync(ct);
-    }
-
-    public async Task<Versiculo?> GetByIdAsync(string id, CancellationToken ct = default)
-        => await _db.Versiculos
-            .Include(v => v.Capitulo)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(v => v.Id == id, ct);
-}
-
-// ── DevocionalRepository ──────────────────────────────────────────────────
-public class DevocionalRepository : IDevocionalRepository
-{
-    private readonly AppDbContext _db;
-    public DevocionalRepository(AppDbContext db) => _db = db;
-
-    public async Task<Devocional?> GetHojeAsync(CancellationToken ct = default)
-    {
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
-        return await _db.Devocionais
-            .Include(d => d.Versiculo)
-                .ThenInclude(v => v.Capitulo)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(d => d.Data == hoje, ct);
-    }
-
-    public async Task<IEnumerable<Devocional>> GetHistoricoAsync(
-        int pagina, int tamanhoPagina, CancellationToken ct = default)
-        => await _db.Devocionais
-            .Include(d => d.Versiculo)
-            .OrderByDescending(d => d.Data)
-            .Skip((pagina - 1) * tamanhoPagina)
-            .Take(tamanhoPagina)
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-    public async Task<int> ContarHistoricoAsync(CancellationToken ct = default)
-        => await _db.Devocionais.CountAsync(ct);
-
-    public async Task<Devocional?> GetMaisRecenteAsync(CancellationToken ct = default)
-    => await _db.Devocionais
-        .Include(d => d.Versiculo)
-            .ThenInclude(v => v.Capitulo)
-        .OrderByDescending(d => d.Data)
-        .AsNoTracking()
-        .FirstOrDefaultAsync(ct);
-}
-
-// ── FavoritoRepository ────────────────────────────────────────────────────
-public class FavoritoRepository : IFavoritoRepository
-{
-    private readonly AppDbContext _db;
-    public FavoritoRepository(AppDbContext db) => _db = db;
-
-    public async Task<IEnumerable<Favorito>> GetByUsuarioIdAsync(string usuarioId, CancellationToken ct = default)
-        => await _db.Favoritos
-            .Include(f => f.Versiculo)
-                .ThenInclude(v => v.Capitulo)
-            .Where(f => f.UsuarioId == usuarioId)
-            .OrderByDescending(f => f.DataSalvo)
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-    public async Task<Favorito?> GetByUsuarioEVersiculoAsync(
-        string usuarioId, string versiculoId, CancellationToken ct = default)
-        => await _db.Favoritos
-            .FirstOrDefaultAsync(f => f.UsuarioId == usuarioId && f.VersiculoId == versiculoId, ct);
-
-    public async Task<Favorito?> GetByIdAsync(string id, CancellationToken ct = default)
-        => await _db.Favoritos.FirstOrDefaultAsync(f => f.Id == id, ct);
-
-    // HashSet para verificação O(1) de isFavorito em listagens
-    public async Task<HashSet<string>> GetVersiculoIdsFavoritosAsync(
-        string usuarioId, CancellationToken ct = default)
-    {
-        var ids = await _db.Favoritos
-            .Where(f => f.UsuarioId == usuarioId)
-            .Select(f => f.VersiculoId)
-            .ToListAsync(ct);
-        return ids.ToHashSet();
-    }
-
-    public async Task AddAsync(Favorito favorito, CancellationToken ct = default)
-        => await _db.Favoritos.AddAsync(favorito, ct);
-
-    public Task RemoveAsync(Favorito favorito, CancellationToken ct = default)
-    {
-        _db.Favoritos.Remove(favorito);
-        return Task.CompletedTask;
-    }
-
-    public async Task SaveChangesAsync(CancellationToken ct = default)
-        => await _db.SaveChangesAsync(ct);
-}
-
-// ── UsuarioRepository ─────────────────────────────────────────────────────
+// ── UsuarioRepository ─────────────────────────────────────────
 public class UsuarioRepository : IUsuarioRepository
 {
     private readonly AppDbContext _db;
     public UsuarioRepository(AppDbContext db) => _db = db;
 
-    public async Task<Usuario?> GetByEmailAsync(string email, CancellationToken ct = default)
-        => await _db.Usuarios.FirstOrDefaultAsync(u => u.Email == email.ToLower(), ct);
+    // AsNoTracking — só leitura, não vai salvar
+    public Task<Usuario?> GetByIdAsync(string id, CancellationToken ct = default) =>
+        _db.Usuarios
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id, ct);
 
-    public async Task<Usuario?> GetByIdAsync(string id, CancellationToken ct = default)
-        => await _db.Usuarios.FirstOrDefaultAsync(u => u.Id == id, ct);
+    // COM tracking — vai modificar e salvar (AtualizarPerfil, AlterarSenha)
+    public Task<Usuario?> GetTrackedByIdAsync(string id, CancellationToken ct = default) =>
+        _db.Usuarios
+            .FirstOrDefaultAsync(u => u.Id == id, ct);
 
-    public async Task<Usuario?> GetByRefreshTokenAsync(string refreshToken, CancellationToken ct = default)
-        => await _db.Usuarios.FirstOrDefaultAsync(
-            u => u.RefreshToken == refreshToken && u.RefreshTokenExpira > DateTime.UtcNow, ct);
+    // COM tracking — Login e Register salvam RefreshToken na mesma instância
+    public Task<Usuario?> GetByEmailAsync(string email, CancellationToken ct = default) =>
+        _db.Usuarios
+            .FirstOrDefaultAsync(u => u.Email == email, ct);
 
-    public async Task AddAsync(Usuario usuario, CancellationToken ct = default)
-        => await _db.Usuarios.AddAsync(usuario, ct);
+    public Task<Usuario?> GetByRefreshTokenAsync(string token, CancellationToken ct = default) =>
+        _db.Usuarios
+            .FirstOrDefaultAsync(
+                u => u.RefreshToken == token && u.RefreshTokenExpira > DateTime.UtcNow, ct);
 
-    public async Task SaveChangesAsync(CancellationToken ct = default)
-        => await _db.SaveChangesAsync(ct);
+    public Task AddAsync(Usuario usuario, CancellationToken ct = default) =>
+        _db.Usuarios.AddAsync(usuario, ct).AsTask();
+
+    public Task SaveChangesAsync(CancellationToken ct = default) =>
+        _db.SaveChangesAsync(ct);
+}
+
+// ── CursoRepository ───────────────────────────────────────────
+public class CursoRepository : ICursoRepository
+{
+    private readonly AppDbContext _db;
+    public CursoRepository(AppDbContext db) => _db = db;
+
+    public async Task<IEnumerable<Curso>> GetAllAsync(CancellationToken ct = default) =>
+        await _db.Cursos
+            .AsNoTracking()
+            .Include(c => c.Categoria)
+            // Filtered include sem OrderBy — ordenação feita no Service ao projetar
+            // EF Core suporta Where dentro de Include, mas não .OrderBy encadeado
+            .Include(c => c.Aulas.Where(a => a.Ativa))
+            .ToListAsync(ct);
+
+    // Inclui aulas para PlayerAulaComponent e DetalhesCursoComponent
+    public Task<Curso?> GetByIdComAulasAsync(string id, CancellationToken ct = default) =>
+        _db.Cursos
+            .AsNoTracking()
+            .Include(c => c.Categoria)
+            .Include(c => c.Aulas.Where(a => a.Ativa))
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
+
+    // Cursos matriculados com aulas (Dashboard + Player)
+    public async Task<IEnumerable<Curso>> GetCursosMatriculadosAsync(
+        string usuarioId, CancellationToken ct = default) =>
+        await _db.Cursos
+            .AsNoTracking()
+            .Include(c => c.Categoria)
+            .Include(c => c.Aulas.Where(a => a.Ativa))
+            .Where(c => c.Matriculas.Any(m => m.UsuarioId == usuarioId && m.Ativa))
+            .ToListAsync(ct);
+
+    // Sugestões: cursos que o aluno ainda não está matriculado
+    public async Task<IEnumerable<Curso>> GetSugestoesAsync(
+        string usuarioId, int quantidade, CancellationToken ct = default) =>
+        await _db.Cursos
+            .AsNoTracking()
+            .Include(c => c.Categoria)
+            .Include(c => c.Aulas.Where(a => a.Ativa))
+            .Where(c => !c.Matriculas.Any(m => m.UsuarioId == usuarioId))
+            .Take(quantidade)
+            .ToListAsync(ct);
+
+    public Task AddAsync(Curso curso, CancellationToken ct = default) =>
+        _db.Cursos.AddAsync(curso, ct).AsTask();
+
+    public Task SaveChangesAsync(CancellationToken ct = default) =>
+        _db.SaveChangesAsync(ct);
+}
+
+// ── MatriculaRepository ───────────────────────────────────────
+public class MatriculaRepository : IMatriculaRepository
+{
+    private readonly AppDbContext _db;
+    public MatriculaRepository(AppDbContext db) => _db = db;
+
+    public Task<Matricula?> GetByUsuarioCursoAsync(
+        string usuarioId, string cursoId, CancellationToken ct = default) =>
+        _db.Matriculas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                m => m.UsuarioId == usuarioId && m.CursoId == cursoId, ct);
+
+    public async Task<IEnumerable<Matricula>> GetByUsuarioAsync(
+        string usuarioId, CancellationToken ct = default) =>
+        await _db.Matriculas
+            .AsNoTracking()
+            .Include(m => m.Curso)
+            .Where(m => m.UsuarioId == usuarioId && m.Ativa)
+            .ToListAsync(ct);
+
+    public Task AddAsync(Matricula matricula, CancellationToken ct = default) =>
+        _db.Matriculas.AddAsync(matricula, ct).AsTask();
+
+    public Task SaveChangesAsync(CancellationToken ct = default) =>
+        _db.SaveChangesAsync(ct);
+}
+
+// ── ProgressoRepository ───────────────────────────────────────
+public class ProgressoRepository : IProgressoRepository
+{
+    private readonly AppDbContext _db;
+    public ProgressoRepository(AppDbContext db) => _db = db;
+
+    // Uma query para todo o curso — sem N+1
+    public async Task<IEnumerable<Progresso>> GetByCursoAsync(
+        string usuarioId, string cursoId, CancellationToken ct = default) =>
+        await _db.Progressos
+            .AsNoTracking()
+            .Where(p => p.UsuarioId == usuarioId && p.CursoId == cursoId)
+            .ToListAsync(ct);
+
+    // COM tracking para upsert
+    public Task<Progresso?> GetByAulaAsync(
+        string usuarioId, string aulaId, CancellationToken ct = default) =>
+        _db.Progressos
+            .FirstOrDefaultAsync(
+                p => p.UsuarioId == usuarioId && p.AulaId == aulaId, ct);
+
+    // Upsert: insere se não existe, atualiza se existe
+    public async Task UpsertAsync(Progresso progresso, CancellationToken ct = default)
+    {
+        var existente = await _db.Progressos
+            .FirstOrDefaultAsync(
+                p => p.UsuarioId == progresso.UsuarioId
+                  && p.AulaId    == progresso.AulaId, ct);
+
+        if (existente is null)
+        {
+            await _db.Progressos.AddAsync(progresso, ct);
+        }
+        else
+        {
+            existente.Concluida      = progresso.Concluida;
+            existente.DataConclusao  = progresso.DataConclusao;
+            // _db já rastreia existente — não precisa de Update() explícito
+        }
+    }
+
+    public Task SaveChangesAsync(CancellationToken ct = default) =>
+        _db.SaveChangesAsync(ct);
+}
+
+// ── CertificadoRepository ─────────────────────────────────────
+public class CertificadoRepository : ICertificadoRepository
+{
+    private readonly AppDbContext _db;
+    public CertificadoRepository(AppDbContext db) => _db = db;
+
+    public Task<Certificado?> GetByUsuarioCursoAsync(
+        string usuarioId, string cursoId, CancellationToken ct = default) =>
+        _db.Certificados
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                c => c.UsuarioId == usuarioId && c.CursoId == cursoId, ct);
+
+    public async Task<IEnumerable<Certificado>> GetByUsuarioAsync(
+        string usuarioId, CancellationToken ct = default) =>
+        await _db.Certificados
+            .AsNoTracking()
+            .Where(c => c.UsuarioId == usuarioId)
+            .OrderByDescending(c => c.DataEmissao)
+            .ToListAsync(ct);
+
+    public Task AddAsync(Certificado certificado, CancellationToken ct = default) =>
+        _db.Certificados.AddAsync(certificado, ct).AsTask();
+
+    public Task SaveChangesAsync(CancellationToken ct = default) =>
+        _db.SaveChangesAsync(ct);
+}
+
+// ── PedidoVibracaoRepository ──────────────────────────────────
+public class PedidoVibracaoRepository : IPedidoVibracaoRepository
+{
+    private readonly AppDbContext _db;
+    public PedidoVibracaoRepository(AppDbContext db) => _db = db;
+
+    public Task AddAsync(PedidoVibracao pedido, CancellationToken ct = default) =>
+        _db.PedidosVibracao.AddAsync(pedido, ct).AsTask();
+
+    public async Task<IEnumerable<PedidoVibracao>> GetAllAsync(
+        int pagina, int tamanho, CancellationToken ct = default) =>
+        await _db.PedidosVibracao
+            .AsNoTracking()
+            .OrderByDescending(p => p.CriadoEm)
+            .Skip((pagina - 1) * tamanho)
+            .Take(tamanho)
+            .ToListAsync(ct);
+
+    public Task<int> CountAsync(CancellationToken ct = default) =>
+        _db.PedidosVibracao.CountAsync(ct);
+
+    public Task SaveChangesAsync(CancellationToken ct = default) =>
+        _db.SaveChangesAsync(ct);
+}
+
+// ── CategoriaRepository ───────────────────────────────────────
+public class CategoriaRepository : ICategoriaRepository
+{
+    private readonly AppDbContext _db;
+    public CategoriaRepository(AppDbContext db) => _db = db;
+
+    public async Task<IEnumerable<Categoria>> GetAllAsync(CancellationToken ct = default) =>
+        await _db.Categorias
+            .AsNoTracking()
+            .Include(c => c.Cursos)
+            .ToListAsync(ct);
+
+    public Task<Categoria?> GetByIdAsync(string id, CancellationToken ct = default) =>
+        _db.Categorias
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
 }
