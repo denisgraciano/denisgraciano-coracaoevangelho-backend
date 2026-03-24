@@ -73,7 +73,7 @@ public record EmitirCertificadoRequestDto(
 // Espelha formulário PedidoVibracoesComponent
 public record PedidoVibracaoRequestDto(
     string Nome,
-    string Email,
+    string? Email,
     string Pedido,
     EnderecoDto? Endereco
 );

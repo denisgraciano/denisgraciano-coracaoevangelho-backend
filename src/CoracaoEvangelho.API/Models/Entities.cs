@@ -140,7 +140,7 @@ public class PedidoVibracao
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string? UsuarioId { get; set; }   // nullable: envio anônimo permitido
     public string Nome { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
+    public string? Email { get; set; } = string.Empty;
     public string Pedido { get; set; } = string.Empty;
     // Endereço (ViaCEP)
     public string? Cep { get; set; }

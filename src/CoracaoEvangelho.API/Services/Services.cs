@@ -472,7 +472,7 @@ public class PedidoVibracaoService : IPedidoVibracaoService
         {
             UsuarioId  = usuarioId,
             Nome       = dto.Nome.Trim(),
-            Email      = dto.Email.ToLower().Trim(),
+            Email      = dto.Email?.Trim().ToLower(),
             Pedido     = dto.Pedido.Trim(),
             Cep        = dto.Endereco?.Cep,
             Logradouro = dto.Endereco?.Logradouro,
@@ -487,7 +487,7 @@ public class PedidoVibracaoService : IPedidoVibracaoService
 
         return new PedidoVibracaoResponseDto(
             pedido.Id,
-            "Seu pedido foi recebido com muito carinho e será incluído em nossas orações.");
+            "Seu pedido foi recebido com muito carinho e será incluído em nossas orações. Vibraremos por você");
     }
 
     public async Task<PagedResultDto<PedidoVibracaoAdminDto>> ListarAsync(

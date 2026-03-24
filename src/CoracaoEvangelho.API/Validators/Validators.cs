@@ -57,7 +57,10 @@ public class PedidoVibracaoRequestValidator : AbstractValidator<PedidoVibracaoRe
     public PedidoVibracaoRequestValidator()
     {
         RuleFor(x => x.Nome).NotEmpty().MinimumLength(3).MaximumLength(150);
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Email)
+    .EmailAddress().WithMessage("E-mail inválido.")
+    .When(x => !string.IsNullOrWhiteSpace(x.Email)); // só valida se vier preenchido
+
         RuleFor(x => x.Pedido)
             .NotEmpty().WithMessage("Por favor, descreva seu pedido.")
             .MinimumLength(10).WithMessage("Pedido muito curto.")
