@@ -34,6 +34,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.SenhaHash).HasMaxLength(100).IsRequired();
             e.Property(x => x.Role).HasMaxLength(20).HasDefaultValue("aluno");
             e.Property(x => x.AvatarUrl).HasMaxLength(500);
+            e.Property(x => x.Ativo).HasDefaultValue(true);
             e.HasIndex(x => x.Email).IsUnique();
         });
 

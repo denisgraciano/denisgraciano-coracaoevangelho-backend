@@ -92,6 +92,60 @@ public class AtualizarPerfilRequestValidator : AbstractValidator<AtualizarPerfil
     }
 }
 
+public class CursoRequestValidator : AbstractValidator<CursoRequestDto>
+{
+    public CursoRequestValidator()
+    {
+        RuleFor(x => x.Titulo)
+            .NotEmpty().WithMessage("Título é obrigatório.")
+            .MinimumLength(3).WithMessage("Título deve ter no mínimo 3 caracteres.")
+            .MaximumLength(200);
+
+        RuleFor(x => x.Descricao)
+            .NotEmpty().WithMessage("Descrição é obrigatória.")
+            .MinimumLength(10).WithMessage("Descrição deve ter no mínimo 10 caracteres.");
+
+        RuleFor(x => x.ImagemUrl)
+            .NotEmpty().WithMessage("URL da imagem é obrigatória.")
+            .MaximumLength(500);
+
+        RuleFor(x => x.Instrutor)
+            .NotEmpty().WithMessage("Instrutor é obrigatório.")
+            .MaximumLength(150);
+    }
+}
+
+public class AulaRequestValidator : AbstractValidator<AulaRequestDto>
+{
+    public AulaRequestValidator()
+    {
+        RuleFor(x => x.Titulo)
+            .NotEmpty().WithMessage("Título é obrigatório.")
+            .MaximumLength(200);
+
+        RuleFor(x => x.YoutubeVideoId)
+            .NotEmpty().WithMessage("ID do vídeo YouTube é obrigatório.")
+            .MaximumLength(50)
+            .Matches(@"^[a-zA-Z0-9_-]{11}$")
+            .WithMessage("YoutubeVideoId deve ter exatamente 11 caracteres (apenas letras, números, - e _).");
+
+        RuleFor(x => x.DuracaoMinutos)
+            .GreaterThan(0).WithMessage("Duração deve ser maior que zero.");
+
+        RuleFor(x => x.Ordem)
+            .GreaterThan(0).WithMessage("Ordem deve ser maior que zero.");
+    }
+}
+
+public class AlterarStatusUsuarioRequestValidator : AbstractValidator<AlterarStatusUsuarioRequestDto>
+{
+    public AlterarStatusUsuarioRequestValidator()
+    {
+        // bool é sempre válido; validator garante que o campo existe no corpo
+        RuleFor(x => x.Ativo).NotNull();
+    }
+}
+
 public class AlterarSenhaRequestValidator : AbstractValidator<AlterarSenhaRequestDto>
 {
     public AlterarSenhaRequestValidator()

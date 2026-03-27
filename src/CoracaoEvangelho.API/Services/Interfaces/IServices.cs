@@ -51,6 +51,29 @@ public interface ICertificadoService
     Task<CertificadoResponseDto> EmitirAsync(string usuarioId, EmitirCertificadoRequestDto dto, CancellationToken ct = default);
 }
 
+// ── IAdminService ─────────────────────────────────────────────
+public interface IAdminService
+{
+    // Usuários
+    Task<PagedResultDto<UsuarioAdminDto>> ListarUsuariosAsync(int pagina, int tamanho, CancellationToken ct = default);
+    Task AlterarStatusUsuarioAsync(string usuarioId, bool ativo, CancellationToken ct = default);
+
+    // Pedidos de Vibração
+    Task<PagedResultDto<PedidoVibracaoAdminDto>> ListarPedidosVibracaoAsync(int pagina, int tamanho, CancellationToken ct = default);
+    Task MarcarPedidoLidoAsync(string pedidoId, CancellationToken ct = default);
+
+    // Cursos
+    Task<IEnumerable<CursoAdminResponseDto>> ListarCursosAsync(CancellationToken ct = default);
+    Task<CursoAdminResponseDto> CriarCursoAsync(CursoRequestDto dto, CancellationToken ct = default);
+    Task<CursoAdminResponseDto> AtualizarCursoAsync(string cursoId, CursoRequestDto dto, CancellationToken ct = default);
+    Task RemoverCursoAsync(string cursoId, CancellationToken ct = default);
+
+    // Aulas
+    Task<AulaAdminResponseDto> AdicionarAulaAsync(string cursoId, AulaRequestDto dto, CancellationToken ct = default);
+    Task<AulaAdminResponseDto> AtualizarAulaAsync(string cursoId, string aulaId, AulaRequestDto dto, CancellationToken ct = default);
+    Task RemoverAulaAsync(string cursoId, string aulaId, CancellationToken ct = default);
+}
+
 // ── IPedidoVibracaoService ────────────────────────────────────
 public interface IPedidoVibracaoService
 {
