@@ -56,6 +56,7 @@ public interface IAdminService
 {
     // Usuários
     Task<PagedResultDto<UsuarioAdminDto>> ListarUsuariosAsync(int pagina, int tamanho, CancellationToken ct = default);
+    Task<UsuarioAdminDto> AtualizarUsuarioAdminAsync(string usuarioId, AtualizarUsuarioAdminRequestDto dto, CancellationToken ct = default);
     Task AlterarStatusUsuarioAsync(string usuarioId, bool ativo, CancellationToken ct = default);
 
     // Pedidos de Vibração
