@@ -1,3 +1,4 @@
+using CoracaoEvangelho.API.Constants;
 using CoracaoEvangelho.API.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +16,9 @@ public static class DbSeeder
 {
     public static async Task SeedAsync(AppDbContext db, ILogger logger)
     {
+        // Seed do usuário admin — idempotente (roda sempre que não existir)
+        await SeedAdminAsync(db, logger);
+
         // Verifica se já tem dados — idempotente
         if (await db.Cursos.AnyAsync())
         {
@@ -128,5 +132,32 @@ public static class DbSeeder
         await db.SaveChangesAsync();
         logger.LogInformation("Seed concluído: {Cursos} cursos, {Aulas} aulas.",
             2, aulasEspiritismo.Count + aulasEvangelho.Count);
+    }
+
+    // ── Admin seed ────────────────────────────────────────────
+    // Cria um usuário admin padrão apenas em Development.
+    // Credenciais: admin@coracao.dev / Admin@123456
+    private static async Task SeedAdminAsync(AppDbContext db, ILogger logger)
+    {
+        const string adminEmail = "admin@coracao.dev";
+
+        if (await db.Usuarios.AnyAsync(u => u.Email == adminEmail))
+            return;
+
+        var admin = new Usuario
+        {
+            Email        = adminEmail,
+            Nome         = "Administrador",
+            SenhaHash    = BCrypt.Net.BCrypt.HashPassword("Admin@123456", workFactor: 12),
+            Role         = Roles.Admin,
+            Ativo        = true,
+            DataCadastro = DateTime.UtcNow
+        };
+
+        await db.Usuarios.AddAsync(admin);
+        await db.SaveChangesAsync();
+
+        logger.LogInformation(
+            "Usuário admin criado — email: {Email} / senha: Admin@123456", adminEmail);
     }
 }
