@@ -34,7 +34,6 @@ public interface IMatriculaService
 {
     Task<MatriculaResponseDto> InscreverAsync(string usuarioId, string cursoId, MatriculaRequestDto dto, CancellationToken ct = default);
     Task<bool> EstaMatriculadoAsync(string usuarioId, string cursoId, CancellationToken ct = default);
-    Task<PagedResultDto<MatriculaAdminDto>> ListarAsync(int pagina, int tamanho, CancellationToken ct = default);
 }
 
 // ── IProgressoService ─────────────────────────────────────────
@@ -59,6 +58,9 @@ public interface IAdminService
     Task<PagedResultDto<UsuarioAdminDto>> ListarUsuariosAsync(int pagina, int tamanho, CancellationToken ct = default);
     Task<UsuarioAdminDto> AtualizarUsuarioAdminAsync(string usuarioId, AtualizarUsuarioAdminRequestDto dto, CancellationToken ct = default);
     Task AlterarStatusUsuarioAsync(string usuarioId, bool ativo, CancellationToken ct = default);
+
+    // Matrículas
+    Task<PagedResultDto<MatriculaAdminDto>> ListarMatriculasAsync(int pagina, int tamanho, CancellationToken ct = default);
 
     // Pedidos de Vibração
     Task<PagedResultDto<PedidoVibracaoAdminDto>> ListarPedidosVibracaoAsync(int pagina, int tamanho, CancellationToken ct = default);
