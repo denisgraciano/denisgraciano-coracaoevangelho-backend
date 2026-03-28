@@ -304,6 +304,30 @@ public class MatriculaService : IMatriculaService
         var m = await _matriculaRepo.GetByUsuarioCursoAsync(usuarioId, cursoId, ct);
         return m is { Ativa: true };
     }
+
+    public async Task<PagedResultDto<MatriculaAdminDto>> ListarAsync(
+        int pagina, int tamanho, CancellationToken ct = default)
+    {
+        var total = await _matriculaRepo.CountAllAsync(ct);
+        var itens = await _matriculaRepo.GetAllAsync(pagina, tamanho, ct);
+
+        return new PagedResultDto<MatriculaAdminDto>(
+            Items: itens.Select(m => new MatriculaAdminDto(
+                m.Id,
+                m.UsuarioId,
+                m.Usuario.Nome,
+                m.Usuario.Email,
+                m.CursoId,
+                m.Curso.Titulo,
+                m.DataMatricula,
+                m.Ativa)),
+            TotalItens:    total,
+            Pagina:        pagina,
+            TamanhoPagina: tamanho,
+            TotalPaginas:  (int)Math.Ceiling((double)total / tamanho),
+            TemProxima:    pagina * tamanho < total,
+            TemAnterior:   pagina > 1);
+    }
 }
 
 // ── ProgressoService ──────────────────────────────────────────

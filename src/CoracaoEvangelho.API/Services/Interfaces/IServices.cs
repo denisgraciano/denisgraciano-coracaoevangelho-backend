@@ -34,6 +34,7 @@ public interface IMatriculaService
 {
     Task<MatriculaResponseDto> InscreverAsync(string usuarioId, string cursoId, MatriculaRequestDto dto, CancellationToken ct = default);
     Task<bool> EstaMatriculadoAsync(string usuarioId, string cursoId, CancellationToken ct = default);
+    Task<PagedResultDto<MatriculaAdminDto>> ListarAsync(int pagina, int tamanho, CancellationToken ct = default);
 }
 
 // ── IProgressoService ─────────────────────────────────────────
