@@ -3,6 +3,7 @@
 // FluentValidation para todos os RequestDtos
 // ============================================================
 
+using CoracaoEvangelho.API.Constants;
 using CoracaoEvangelho.API.DTOs.Request;
 using FluentValidation;
 
@@ -143,6 +144,33 @@ public class AlterarStatusUsuarioRequestValidator : AbstractValidator<AlterarSta
     {
         // bool é sempre válido; validator garante que o campo existe no corpo
         RuleFor(x => x.Ativo).NotNull();
+    }
+}
+
+public class AtualizarUsuarioAdminRequestValidator : AbstractValidator<AtualizarUsuarioAdminRequestDto>
+{
+    public AtualizarUsuarioAdminRequestValidator()
+    {
+        RuleFor(x => x.Nome)
+            .NotEmpty().WithMessage("Nome é obrigatório.")
+            .MinimumLength(3).WithMessage("Nome deve ter no mínimo 3 caracteres.")
+            .MaximumLength(150);
+
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("E-mail é obrigatório.")
+            .EmailAddress().WithMessage("E-mail inválido.")
+            .MaximumLength(200);
+
+        RuleFor(x => x.AvatarUrl)
+            .MaximumLength(500)
+            .Must(url => url == null || Uri.TryCreate(url, UriKind.Absolute, out _))
+            .WithMessage("URL do avatar inválida.")
+            .When(x => x.AvatarUrl != null);
+
+        RuleFor(x => x.Role)
+            .NotEmpty().WithMessage("Role é obrigatório.")
+            .Must(r => r == Roles.Admin || r == Roles.Aluno)
+            .WithMessage($"Role inválido. Use '{Roles.Admin}' ou '{Roles.Aluno}'.");
     }
 }
 

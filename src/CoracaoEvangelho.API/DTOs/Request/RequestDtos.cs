@@ -81,6 +81,14 @@ public record PedidoVibracaoRequestDto(
 // ── Admin — alteração de status de usuário ────────────────────
 public record AlterarStatusUsuarioRequestDto(bool Ativo);
 
+// ── Admin — atualização completa de usuário ───────────────────
+public record AtualizarUsuarioAdminRequestDto(
+    string Nome,
+    string Email,
+    string? AvatarUrl,
+    string Role
+);
+
 // ── Usuario (perfil) ──────────────────────────────────────────
 public record AtualizarPerfilRequestDto(
     string Nome,

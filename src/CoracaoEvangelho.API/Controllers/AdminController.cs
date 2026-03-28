@@ -14,6 +14,7 @@ namespace CoracaoEvangelho.API.Controllers;
 /// | Método | Rota                                          | Descrição                       |
 /// |--------|-----------------------------------------------|---------------------------------|
 /// | GET    | /api/admin/usuarios                           | Lista usuários (paginado)       |
+/// | PUT    | /api/admin/usuarios/{id}                      | Atualiza dados do usuário       |
 /// | PUT    | /api/admin/usuarios/{id}/status               | Habilita / desabilita usuário   |
 /// | GET    | /api/admin/pedidos-vibracao                   | Lista pedidos (paginado)        |
 /// | PUT    | /api/admin/pedidos-vibracao/{id}/lido         | Marca pedido como lido          |
@@ -49,6 +50,23 @@ public class AdminController : ControllerBase
     {
         var resultado = await _adminService.ListarUsuariosAsync(pagina, tamanho, ct);
         return Ok(ApiResponse<PagedResultDto<UsuarioAdminDto>>.Ok(resultado));
+    }
+
+    [HttpPut("usuarios/{id}")]
+    [SwaggerOperation(Summary = "Atualiza dados de um usuário (admin)", Tags = new[] { "Admin" })]
+    [ProducesResponseType(typeof(ApiResponse<UsuarioAdminDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> AtualizarUsuario(
+        string id,
+        [FromBody] AtualizarUsuarioAdminRequestDto dto,
+        CancellationToken ct = default)
+    {
+        var usuario = await _adminService.AtualizarUsuarioAdminAsync(id, dto, ct);
+        return Ok(ApiResponse<UsuarioAdminDto>.Ok(usuario, "Usuário atualizado com sucesso."));
     }
 
     [HttpPut("usuarios/{id}/status")]

@@ -499,6 +499,29 @@ public class AdminService : IAdminService
             TemAnterior:   pagina > 1);
     }
 
+    public async Task<UsuarioAdminDto> AtualizarUsuarioAdminAsync(
+        string usuarioId, AtualizarUsuarioAdminRequestDto dto, CancellationToken ct = default)
+    {
+        var usuario = await _usuarioRepo.GetTrackedByIdAsync(usuarioId, ct)
+            ?? throw new KeyNotFoundException($"Usuário '{usuarioId}' não encontrado.");
+
+        var emailNorm = dto.Email.ToLower().Trim();
+        if (!string.Equals(usuario.Email, emailNorm, StringComparison.Ordinal))
+        {
+            var emailExistente = await _usuarioRepo.GetByEmailAsync(emailNorm, ct);
+            if (emailExistente is not null)
+                throw new InvalidOperationException("E-mail já está em uso por outro usuário.");
+        }
+
+        usuario.Nome      = dto.Nome.Trim();
+        usuario.Email     = emailNorm;
+        usuario.AvatarUrl = dto.AvatarUrl;
+        usuario.Role      = dto.Role;
+
+        await _usuarioRepo.SaveChangesAsync(ct);
+        return MapUsuario(usuario);
+    }
+
     public async Task AlterarStatusUsuarioAsync(
         string usuarioId, bool ativo, CancellationToken ct = default)
     {
