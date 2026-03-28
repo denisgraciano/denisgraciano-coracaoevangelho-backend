@@ -192,7 +192,7 @@ public record PedidoVibracaoResponseDto(
 public record PedidoVibracaoAdminDto(
     string Id,
     string Nome,
-    string Email,
+    string? Email,
     string Pedido,
     string? Cidade,
     string? Estado,

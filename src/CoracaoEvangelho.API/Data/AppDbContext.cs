@@ -136,7 +136,7 @@ public class AppDbContext : DbContext
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.Nome).HasMaxLength(150).IsRequired();
-            e.Property(x => x.Email).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Email).HasMaxLength(200);
             e.Property(x => x.Pedido).HasColumnType("TEXT").IsRequired();
             e.Property(x => x.Cep).HasMaxLength(10);
             e.Property(x => x.Logradouro).HasMaxLength(300);
