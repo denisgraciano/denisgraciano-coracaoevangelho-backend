@@ -17,6 +17,7 @@ public class Usuario
     public string? AvatarUrl { get; set; }
     public string Role { get; set; } = "aluno";   // "aluno" | "admin"
     public DateTime DataCadastro { get; set; } = DateTime.UtcNow;
+    public bool Ativo { get; set; } = true;
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpira { get; set; }
 

@@ -85,6 +85,7 @@ builder.Services.AddScoped<IProgressoRepository,     ProgressoRepository>();
 builder.Services.AddScoped<ICertificadoRepository,   CertificadoRepository>();
 builder.Services.AddScoped<IPedidoVibracaoRepository, PedidoVibracaoRepository>();
 builder.Services.AddScoped<ICategoriaRepository,     CategoriaRepository>();
+builder.Services.AddScoped<IAulaRepository,          AulaRepository>();
 
 // ── Services (Scoped) ─────────────────────────────────────────
 builder.Services.AddScoped<IAuthService,            AuthService>();
@@ -94,6 +95,7 @@ builder.Services.AddScoped<IMatriculaService,       MatriculaService>();
 builder.Services.AddScoped<IProgressoService,       ProgressoService>();
 builder.Services.AddScoped<ICertificadoService,     CertificadoService>();
 builder.Services.AddScoped<IPedidoVibracaoService,  PedidoVibracaoService>();
+builder.Services.AddScoped<IAdminService,           AdminService>();
 
 // ── FluentValidation ──────────────────────────────────────────
 builder.Services.AddFluentValidationAutoValidation();

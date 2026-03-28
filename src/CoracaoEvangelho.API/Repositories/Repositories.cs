@@ -32,6 +32,18 @@ public class UsuarioRepository : IUsuarioRepository
             .FirstOrDefaultAsync(
                 u => u.RefreshToken == token && u.RefreshTokenExpira > DateTime.UtcNow, ct);
 
+    public async Task<IEnumerable<Usuario>> GetAllPagedAsync(
+        int pagina, int tamanho, CancellationToken ct = default) =>
+        await _db.Usuarios
+            .AsNoTracking()
+            .OrderBy(u => u.Nome)
+            .Skip((pagina - 1) * tamanho)
+            .Take(tamanho)
+            .ToListAsync(ct);
+
+    public Task<int> CountAsync(CancellationToken ct = default) =>
+        _db.Usuarios.CountAsync(ct);
+
     public Task AddAsync(Usuario usuario, CancellationToken ct = default) =>
         _db.Usuarios.AddAsync(usuario, ct).AsTask();
 
@@ -82,6 +94,23 @@ public class CursoRepository : ICursoRepository
             .Where(c => !c.Matriculas.Any(m => m.UsuarioId == usuarioId))
             .Take(quantidade)
             .ToListAsync(ct);
+
+    // Admin: inclui cursos inativos (IgnoreQueryFilters)
+    public async Task<IEnumerable<Curso>> GetAllAdminAsync(CancellationToken ct = default) =>
+        await _db.Cursos
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Include(c => c.Categoria)
+            .Include(c => c.Aulas)
+            .OrderByDescending(c => c.CriadoEm)
+            .ToListAsync(ct);
+
+    // Admin: tracked, sem QueryFilter — permite editar cursos inativos
+    public Task<Curso?> GetTrackedByIdAsync(string id, CancellationToken ct = default) =>
+        _db.Cursos
+            .IgnoreQueryFilters()
+            .Include(c => c.Aulas)
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
 
     public Task AddAsync(Curso curso, CancellationToken ct = default) =>
         _db.Cursos.AddAsync(curso, ct).AsTask();
@@ -211,6 +240,36 @@ public class PedidoVibracaoRepository : IPedidoVibracaoRepository
 
     public Task<int> CountAsync(CancellationToken ct = default) =>
         _db.PedidosVibracao.CountAsync(ct);
+
+    // COM tracking para marcar como lido
+    public Task<PedidoVibracao?> GetTrackedByIdAsync(string id, CancellationToken ct = default) =>
+        _db.PedidosVibracao
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+
+    public Task SaveChangesAsync(CancellationToken ct = default) =>
+        _db.SaveChangesAsync(ct);
+}
+
+// ── AulaRepository ────────────────────────────────────────────
+public class AulaRepository : IAulaRepository
+{
+    private readonly AppDbContext _db;
+    public AulaRepository(AppDbContext db) => _db = db;
+
+    // IgnoreQueryFilters: admin precisa ver aulas inativas também
+    public Task<Aula?> GetByIdAsync(string id, CancellationToken ct = default) =>
+        _db.Aulas
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id, ct);
+
+    public Task<Aula?> GetTrackedByIdAsync(string id, CancellationToken ct = default) =>
+        _db.Aulas
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(a => a.Id == id, ct);
+
+    public Task AddAsync(Aula aula, CancellationToken ct = default) =>
+        _db.Aulas.AddAsync(aula, ct).AsTask();
 
     public Task SaveChangesAsync(CancellationToken ct = default) =>
         _db.SaveChangesAsync(ct);

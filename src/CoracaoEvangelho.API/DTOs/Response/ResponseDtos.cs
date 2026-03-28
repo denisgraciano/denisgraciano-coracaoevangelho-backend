@@ -140,6 +140,47 @@ public record CertificadoResponseDto(
     decimal CargaHoraria
 );
 
+// ── Admin — Usuario completo ───────────────────────────────────
+// Inclui Role e Ativo — nunca exposto fora de rotas [admin]
+public record UsuarioAdminDto(
+    string Id,
+    string Nome,
+    string Email,
+    string? AvatarUrl,
+    string Role,
+    DateTime DataCadastro,
+    bool Ativo
+);
+
+// ── Admin — Curso completo (inclui inativos) ───────────────────
+public record CursoAdminResponseDto(
+    string Id,
+    string Titulo,
+    string Descricao,
+    string? CategoriaId,
+    string? CategoriaNome,
+    string ImagemUrl,
+    string Instrutor,
+    bool CertificadoDisponivel,
+    bool Ativo,
+    int TotalAulas,
+    DateTime CriadoEm,
+    DateTime AtualizadoEm,
+    IEnumerable<AulaAdminResponseDto> Aulas
+);
+
+// ── Admin — Aula completa (inclui inativas) ────────────────────
+public record AulaAdminResponseDto(
+    string Id,
+    string CursoId,
+    string Titulo,
+    string? Descricao,
+    string YoutubeVideoId,
+    int DuracaoMinutos,
+    int Ordem,
+    bool Ativa
+);
+
 // ── Pedido de Vibrações — resposta ao aluno ───────────────────
 public record PedidoVibracaoResponseDto(
     string Id,

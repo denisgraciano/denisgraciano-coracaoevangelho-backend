@@ -78,6 +78,9 @@ public record PedidoVibracaoRequestDto(
     EnderecoDto? Endereco
 );
 
+// ── Admin — alteração de status de usuário ────────────────────
+public record AlterarStatusUsuarioRequestDto(bool Ativo);
+
 // ── Usuario (perfil) ──────────────────────────────────────────
 public record AtualizarPerfilRequestDto(
     string Nome,

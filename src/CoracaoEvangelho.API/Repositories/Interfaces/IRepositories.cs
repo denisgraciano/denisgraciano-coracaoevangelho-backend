@@ -20,6 +20,11 @@ public interface IUsuarioRepository
     Task<Usuario?> GetByEmailAsync(string email, CancellationToken ct = default);
 
     Task<Usuario?> GetByRefreshTokenAsync(string refreshToken, CancellationToken ct = default);
+
+    /// <summary>Lista paginada de todos os usuários — uso exclusivo admin.</summary>
+    Task<IEnumerable<Usuario>> GetAllPagedAsync(int pagina, int tamanho, CancellationToken ct = default);
+
+    Task<int> CountAsync(CancellationToken ct = default);
     Task AddAsync(Usuario usuario, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }
@@ -33,6 +38,15 @@ public interface ICursoRepository
 
     /// <summary>Cursos ativos nos quais o aluno NÃO está matriculado.</summary>
     Task<IEnumerable<Curso>> GetSugestoesAsync(string usuarioId, int quantidade, CancellationToken ct = default);
+
+    /// <summary>
+    /// Lista todos os cursos incluindo inativos — uso exclusivo admin.
+    /// Ignora o QueryFilter de soft delete.
+    /// </summary>
+    Task<IEnumerable<Curso>> GetAllAdminAsync(CancellationToken ct = default);
+
+    /// <summary>Leitura COM tracking e sem QueryFilter — para edição admin.</summary>
+    Task<Curso?> GetTrackedByIdAsync(string id, CancellationToken ct = default);
 
     Task AddAsync(Curso curso, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
@@ -76,6 +90,23 @@ public interface IPedidoVibracaoRepository
     Task AddAsync(PedidoVibracao pedido, CancellationToken ct = default);
     Task<IEnumerable<PedidoVibracao>> GetAllAsync(int pagina, int tamanho, CancellationToken ct = default);
     Task<int> CountAsync(CancellationToken ct = default);
+
+    /// <summary>Leitura COM tracking — para marcar como lido.</summary>
+    Task<PedidoVibracao?> GetTrackedByIdAsync(string id, CancellationToken ct = default);
+
+    Task SaveChangesAsync(CancellationToken ct = default);
+}
+
+// ── IAulaRepository ───────────────────────────────────────────
+public interface IAulaRepository
+{
+    /// <summary>Leitura sem tracking, ignora QueryFilter (inclui inativas).</summary>
+    Task<Aula?> GetByIdAsync(string id, CancellationToken ct = default);
+
+    /// <summary>Leitura COM tracking, ignora QueryFilter — para edição/remoção admin.</summary>
+    Task<Aula?> GetTrackedByIdAsync(string id, CancellationToken ct = default);
+
+    Task AddAsync(Aula aula, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }
 

@@ -1,3 +1,4 @@
+using CoracaoEvangelho.API.Constants;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -56,6 +57,9 @@ public class AuthService : IAuthService
 
         if (!BCrypt.Net.BCrypt.Verify(dto.Senha, usuario.SenhaHash))
             throw new UnauthorizedAccessException("Credenciais inválidas.");
+
+        if (!usuario.Ativo)
+            throw new UnauthorizedAccessException("Conta desativada. Entre em contato com o suporte.");
 
         GerarRefreshToken(usuario);
         await _usuarioRepo.SaveChangesAsync(ct);
@@ -455,6 +459,219 @@ public class CertificadoService : ICertificadoService
     private static CertificadoResponseDto Map(Certificado c) =>
         new(c.Id, c.CursoId, c.CursoTitulo, c.AlunoNome,
             c.DataEmissao.ToString("o"), c.CargaHoraria);
+}
+
+// ── AdminService ──────────────────────────────────────────────
+public class AdminService : IAdminService
+{
+    private readonly IUsuarioRepository       _usuarioRepo;
+    private readonly ICursoRepository         _cursoRepo;
+    private readonly IAulaRepository          _aulaRepo;
+    private readonly IPedidoVibracaoRepository _pedidoRepo;
+
+    public AdminService(
+        IUsuarioRepository usuarioRepo,
+        ICursoRepository cursoRepo,
+        IAulaRepository aulaRepo,
+        IPedidoVibracaoRepository pedidoRepo)
+    {
+        _usuarioRepo = usuarioRepo;
+        _cursoRepo   = cursoRepo;
+        _aulaRepo    = aulaRepo;
+        _pedidoRepo  = pedidoRepo;
+    }
+
+    // ── Usuários ──────────────────────────────────────────────
+
+    public async Task<PagedResultDto<UsuarioAdminDto>> ListarUsuariosAsync(
+        int pagina, int tamanho, CancellationToken ct = default)
+    {
+        var total   = await _usuarioRepo.CountAsync(ct);
+        var usuarios = await _usuarioRepo.GetAllPagedAsync(pagina, tamanho, ct);
+
+        return new PagedResultDto<UsuarioAdminDto>(
+            Items:         usuarios.Select(MapUsuario),
+            TotalItens:    total,
+            Pagina:        pagina,
+            TamanhoPagina: tamanho,
+            TotalPaginas:  (int)Math.Ceiling((double)total / tamanho),
+            TemProxima:    pagina * tamanho < total,
+            TemAnterior:   pagina > 1);
+    }
+
+    public async Task AlterarStatusUsuarioAsync(
+        string usuarioId, bool ativo, CancellationToken ct = default)
+    {
+        var usuario = await _usuarioRepo.GetTrackedByIdAsync(usuarioId, ct)
+            ?? throw new KeyNotFoundException($"Usuário '{usuarioId}' não encontrado.");
+
+        usuario.Ativo = ativo;
+        await _usuarioRepo.SaveChangesAsync(ct);
+    }
+
+    // ── Pedidos de Vibração ───────────────────────────────────
+
+    public async Task<PagedResultDto<PedidoVibracaoAdminDto>> ListarPedidosVibracaoAsync(
+        int pagina, int tamanho, CancellationToken ct = default)
+    {
+        var total = await _pedidoRepo.CountAsync(ct);
+        var itens  = await _pedidoRepo.GetAllAsync(pagina, tamanho, ct);
+
+        return new PagedResultDto<PedidoVibracaoAdminDto>(
+            Items:         itens.Select(p => new PedidoVibracaoAdminDto(
+                               p.Id, p.Nome, p.Email ?? string.Empty,
+                               p.Pedido, p.Cidade, p.Estado, p.CriadoEm, p.Lido)),
+            TotalItens:    total,
+            Pagina:        pagina,
+            TamanhoPagina: tamanho,
+            TotalPaginas:  (int)Math.Ceiling((double)total / tamanho),
+            TemProxima:    pagina * tamanho < total,
+            TemAnterior:   pagina > 1);
+    }
+
+    public async Task MarcarPedidoLidoAsync(string pedidoId, CancellationToken ct = default)
+    {
+        var pedido = await _pedidoRepo.GetTrackedByIdAsync(pedidoId, ct)
+            ?? throw new KeyNotFoundException($"Pedido '{pedidoId}' não encontrado.");
+
+        pedido.Lido = true;
+        await _pedidoRepo.SaveChangesAsync(ct);
+    }
+
+    // ── Cursos ────────────────────────────────────────────────
+
+    public async Task<IEnumerable<CursoAdminResponseDto>> ListarCursosAsync(
+        CancellationToken ct = default)
+    {
+        var cursos = await _cursoRepo.GetAllAdminAsync(ct);
+        return cursos.Select(MapCurso);
+    }
+
+    public async Task<CursoAdminResponseDto> CriarCursoAsync(
+        CursoRequestDto dto, CancellationToken ct = default)
+    {
+        var curso = new Curso
+        {
+            Titulo                = dto.Titulo,
+            Descricao             = dto.Descricao,
+            CategoriaId           = dto.CategoriaId,
+            ImagemUrl             = dto.ImagemUrl,
+            Instrutor             = dto.Instrutor,
+            CertificadoDisponivel = dto.CertificadoDisponivel,
+            CriadoEm             = DateTime.UtcNow,
+            AtualizadoEm         = DateTime.UtcNow
+        };
+
+        await _cursoRepo.AddAsync(curso, ct);
+        await _cursoRepo.SaveChangesAsync(ct);
+        return MapCurso(curso);
+    }
+
+    public async Task<CursoAdminResponseDto> AtualizarCursoAsync(
+        string cursoId, CursoRequestDto dto, CancellationToken ct = default)
+    {
+        var curso = await _cursoRepo.GetTrackedByIdAsync(cursoId, ct)
+            ?? throw new KeyNotFoundException($"Curso '{cursoId}' não encontrado.");
+
+        curso.Titulo                = dto.Titulo;
+        curso.Descricao             = dto.Descricao;
+        curso.CategoriaId           = dto.CategoriaId;
+        curso.ImagemUrl             = dto.ImagemUrl;
+        curso.Instrutor             = dto.Instrutor;
+        curso.CertificadoDisponivel = dto.CertificadoDisponivel;
+        curso.AtualizadoEm         = DateTime.UtcNow;
+
+        await _cursoRepo.SaveChangesAsync(ct);
+        return MapCurso(curso);
+    }
+
+    public async Task RemoverCursoAsync(string cursoId, CancellationToken ct = default)
+    {
+        var curso = await _cursoRepo.GetTrackedByIdAsync(cursoId, ct)
+            ?? throw new KeyNotFoundException($"Curso '{cursoId}' não encontrado.");
+
+        curso.Ativo      = false;
+        curso.AtualizadoEm = DateTime.UtcNow;
+        await _cursoRepo.SaveChangesAsync(ct);
+    }
+
+    // ── Aulas ─────────────────────────────────────────────────
+
+    public async Task<AulaAdminResponseDto> AdicionarAulaAsync(
+        string cursoId, AulaRequestDto dto, CancellationToken ct = default)
+    {
+        var curso = await _cursoRepo.GetTrackedByIdAsync(cursoId, ct)
+            ?? throw new KeyNotFoundException($"Curso '{cursoId}' não encontrado.");
+
+        var ordemOcupada = curso.Aulas.Any(a => a.Ordem == dto.Ordem);
+        if (ordemOcupada)
+            throw new InvalidOperationException(
+                $"Já existe uma aula na posição {dto.Ordem} neste curso.");
+
+        var aula = new Aula
+        {
+            CursoId        = cursoId,
+            Titulo         = dto.Titulo,
+            Descricao      = dto.Descricao,
+            YoutubeVideoId = dto.YoutubeVideoId,
+            DuracaoMinutos = dto.DuracaoMinutos,
+            Ordem          = dto.Ordem
+        };
+
+        await _aulaRepo.AddAsync(aula, ct);
+        await _aulaRepo.SaveChangesAsync(ct);
+        return MapAula(aula);
+    }
+
+    public async Task<AulaAdminResponseDto> AtualizarAulaAsync(
+        string cursoId, string aulaId, AulaRequestDto dto, CancellationToken ct = default)
+    {
+        var aula = await _aulaRepo.GetTrackedByIdAsync(aulaId, ct)
+            ?? throw new KeyNotFoundException($"Aula '{aulaId}' não encontrada.");
+
+        if (aula.CursoId != cursoId)
+            throw new ArgumentException("Aula não pertence ao curso informado.");
+
+        aula.Titulo         = dto.Titulo;
+        aula.Descricao      = dto.Descricao;
+        aula.YoutubeVideoId = dto.YoutubeVideoId;
+        aula.DuracaoMinutos = dto.DuracaoMinutos;
+        aula.Ordem          = dto.Ordem;
+
+        await _aulaRepo.SaveChangesAsync(ct);
+        return MapAula(aula);
+    }
+
+    public async Task RemoverAulaAsync(
+        string cursoId, string aulaId, CancellationToken ct = default)
+    {
+        var aula = await _aulaRepo.GetTrackedByIdAsync(aulaId, ct)
+            ?? throw new KeyNotFoundException($"Aula '{aulaId}' não encontrada.");
+
+        if (aula.CursoId != cursoId)
+            throw new ArgumentException("Aula não pertence ao curso informado.");
+
+        aula.Ativa = false;
+        await _aulaRepo.SaveChangesAsync(ct);
+    }
+
+    // ── Mapeamentos privados ──────────────────────────────────
+
+    private static UsuarioAdminDto MapUsuario(Usuario u) =>
+        new(u.Id, u.Nome, u.Email, u.AvatarUrl, u.Role, u.DataCadastro, u.Ativo);
+
+    private static CursoAdminResponseDto MapCurso(Curso c) =>
+        new(c.Id, c.Titulo, c.Descricao,
+            c.CategoriaId, c.Categoria?.Nome,
+            c.ImagemUrl, c.Instrutor,
+            c.CertificadoDisponivel, c.Ativo,
+            c.Aulas.Count(a => a.Ativa),
+            c.CriadoEm, c.AtualizadoEm,
+            c.Aulas.OrderBy(a => a.Ordem).Select(MapAula));
+
+    private static AulaAdminResponseDto MapAula(Aula a) =>
+        new(a.Id, a.CursoId, a.Titulo, a.Descricao,
+            a.YoutubeVideoId, a.DuracaoMinutos, a.Ordem, a.Ativa);
 }
 
 // ── PedidoVibracaoService ─────────────────────────────────────
