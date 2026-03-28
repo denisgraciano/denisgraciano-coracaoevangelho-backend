@@ -83,7 +83,7 @@ public class AdminController : ControllerBase
         return Ok(ApiResponse<PagedResultDto<PedidoVibracaoAdminDto>>.Ok(resultado));
     }
 
-    [HttpPut("pedidos-vibracao/{id}/lido")]
+    [HttpPatch("pedidos-vibracao/{id}/lido")]
     [SwaggerOperation(Summary = "Marca pedido de vibração como lido", Tags = new[] { "Admin" })]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
