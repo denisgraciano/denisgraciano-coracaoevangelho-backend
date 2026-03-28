@@ -59,6 +59,9 @@ public interface IAdminService
     Task<UsuarioAdminDto> AtualizarUsuarioAdminAsync(string usuarioId, AtualizarUsuarioAdminRequestDto dto, CancellationToken ct = default);
     Task AlterarStatusUsuarioAsync(string usuarioId, bool ativo, CancellationToken ct = default);
 
+    // Matrículas
+    Task<PagedResultDto<MatriculaAdminDto>> ListarMatriculasAsync(int pagina, int tamanho, CancellationToken ct = default);
+
     // Pedidos de Vibração
     Task<PagedResultDto<PedidoVibracaoAdminDto>> ListarPedidosVibracaoAsync(int pagina, int tamanho, CancellationToken ct = default);
     Task MarcarPedidoLidoAsync(string pedidoId, CancellationToken ct = default);

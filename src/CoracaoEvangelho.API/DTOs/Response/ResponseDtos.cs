@@ -181,6 +181,20 @@ public record AulaAdminResponseDto(
     bool Ativa
 );
 
+// ── Matrícula — listagem admin ─────────────────────────────────
+// DTO separado de MatriculaResponseDto para não quebrar o contrato
+// existente com o frontend do aluno.
+public record MatriculaAdminDto(
+    string Id,
+    string UsuarioId,
+    string UsuarioNome,
+    string UsuarioEmail,
+    string CursoId,
+    string CursoTitulo,
+    DateTime DataMatricula,
+    bool Ativa
+);
+
 // ── Pedido de Vibrações — resposta ao aluno ───────────────────
 public record PedidoVibracaoResponseDto(
     string Id,

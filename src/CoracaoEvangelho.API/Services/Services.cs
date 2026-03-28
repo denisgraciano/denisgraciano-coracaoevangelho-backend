@@ -464,21 +464,24 @@ public class CertificadoService : ICertificadoService
 // ── AdminService ──────────────────────────────────────────────
 public class AdminService : IAdminService
 {
-    private readonly IUsuarioRepository       _usuarioRepo;
-    private readonly ICursoRepository         _cursoRepo;
-    private readonly IAulaRepository          _aulaRepo;
+    private readonly IUsuarioRepository        _usuarioRepo;
+    private readonly ICursoRepository          _cursoRepo;
+    private readonly IAulaRepository           _aulaRepo;
     private readonly IPedidoVibracaoRepository _pedidoRepo;
+    private readonly IMatriculaRepository      _matriculaRepo;
 
     public AdminService(
         IUsuarioRepository usuarioRepo,
         ICursoRepository cursoRepo,
         IAulaRepository aulaRepo,
-        IPedidoVibracaoRepository pedidoRepo)
+        IPedidoVibracaoRepository pedidoRepo,
+        IMatriculaRepository matriculaRepo)
     {
-        _usuarioRepo = usuarioRepo;
-        _cursoRepo   = cursoRepo;
-        _aulaRepo    = aulaRepo;
-        _pedidoRepo  = pedidoRepo;
+        _usuarioRepo   = usuarioRepo;
+        _cursoRepo     = cursoRepo;
+        _aulaRepo      = aulaRepo;
+        _pedidoRepo    = pedidoRepo;
+        _matriculaRepo = matriculaRepo;
     }
 
     // ── Usuários ──────────────────────────────────────────────
@@ -530,6 +533,32 @@ public class AdminService : IAdminService
 
         usuario.Ativo = ativo;
         await _usuarioRepo.SaveChangesAsync(ct);
+    }
+
+    // ── Matrículas ────────────────────────────────────────────
+
+    public async Task<PagedResultDto<MatriculaAdminDto>> ListarMatriculasAsync(
+        int pagina, int tamanho, CancellationToken ct = default)
+    {
+        var total = await _matriculaRepo.CountAllAsync(ct);
+        var itens = await _matriculaRepo.GetAllAsync(pagina, tamanho, ct);
+
+        return new PagedResultDto<MatriculaAdminDto>(
+            Items: itens.Select(m => new MatriculaAdminDto(
+                m.Id,
+                m.UsuarioId,
+                m.Usuario.Nome,
+                m.Usuario.Email,
+                m.CursoId,
+                m.Curso.Titulo,
+                m.DataMatricula,
+                m.Ativa)),
+            TotalItens:    total,
+            Pagina:        pagina,
+            TamanhoPagina: tamanho,
+            TotalPaginas:  (int)Math.Ceiling((double)total / tamanho),
+            TemProxima:    pagina * tamanho < total,
+            TemAnterior:   pagina > 1);
     }
 
     // ── Pedidos de Vibração ───────────────────────────────────

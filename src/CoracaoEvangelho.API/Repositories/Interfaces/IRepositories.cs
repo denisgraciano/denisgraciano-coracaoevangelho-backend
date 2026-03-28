@@ -57,6 +57,8 @@ public interface IMatriculaRepository
 {
     Task<Matricula?> GetByUsuarioCursoAsync(string usuarioId, string cursoId, CancellationToken ct = default);
     Task<IEnumerable<Matricula>> GetByUsuarioAsync(string usuarioId, CancellationToken ct = default);
+    Task<int> CountAllAsync(CancellationToken ct = default);
+    Task<IEnumerable<Matricula>> GetAllAsync(int pagina, int tamanho, CancellationToken ct = default);
     Task AddAsync(Matricula matricula, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

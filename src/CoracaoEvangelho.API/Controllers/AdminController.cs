@@ -13,6 +13,7 @@ namespace CoracaoEvangelho.API.Controllers;
 ///
 /// | Método | Rota                                          | Descrição                       |
 /// |--------|-----------------------------------------------|---------------------------------|
+/// | GET    | /api/admin/matriculas                         | Lista matrículas (paginado)     |
 /// | GET    | /api/admin/usuarios                           | Lista usuários (paginado)       |
 /// | PUT    | /api/admin/usuarios/{id}                      | Atualiza dados do usuário       |
 /// | PUT    | /api/admin/usuarios/{id}/status               | Habilita / desabilita usuário   |
@@ -35,6 +36,25 @@ public class AdminController : ControllerBase
     private readonly IAdminService _adminService;
 
     public AdminController(IAdminService adminService) => _adminService = adminService;
+
+    // ── Matrículas ────────────────────────────────────────────────────────
+
+    [HttpGet("matriculas")]
+    [SwaggerOperation(Summary = "Lista todas as matrículas (admin)", Tags = new[] { "Admin" })]
+    [ProducesResponseType(typeof(ApiResponse<PagedResultDto<MatriculaAdminDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ListarMatriculas(
+        [FromQuery] int pagina = 1,
+        [FromQuery] int tamanho = 20,
+        CancellationToken ct = default)
+    {
+        if (pagina < 1) pagina = 1;
+        if (tamanho is < 1 or > 100) tamanho = 20;
+
+        var resultado = await _adminService.ListarMatriculasAsync(pagina, tamanho, ct);
+        return Ok(ApiResponse<PagedResultDto<MatriculaAdminDto>>.Ok(resultado));
+    }
 
     // ── Usuários ──────────────────────────────────────────────────────────
 

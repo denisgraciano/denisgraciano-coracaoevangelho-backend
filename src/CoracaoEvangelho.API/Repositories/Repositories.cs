@@ -140,6 +140,20 @@ public class MatriculaRepository : IMatriculaRepository
             .Where(m => m.UsuarioId == usuarioId && m.Ativa)
             .ToListAsync(ct);
 
+    public Task<int> CountAllAsync(CancellationToken ct = default) =>
+        _db.Matriculas.CountAsync(ct);
+
+    public async Task<IEnumerable<Matricula>> GetAllAsync(
+        int pagina, int tamanho, CancellationToken ct = default) =>
+        await _db.Matriculas
+            .Include(m => m.Usuario)
+            .Include(m => m.Curso)
+            .OrderByDescending(m => m.DataMatricula)
+            .Skip((pagina - 1) * tamanho)
+            .Take(tamanho)
+            .AsNoTracking()
+            .ToListAsync(ct);
+
     public Task AddAsync(Matricula matricula, CancellationToken ct = default) =>
         _db.Matriculas.AddAsync(matricula, ct).AsTask();
 
