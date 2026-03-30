@@ -68,7 +68,7 @@ public class ValidatorTests
     [Fact]
     public void Matricula_DadosValidos_SemErros()
     {
-        var dto    = new MatriculaRequestDto("João Silva", "joao@email.com", null, null);
+        var dto    = new MatriculaRequestDto("João Silva", "joao@email.com", null, null, null, null, null, true, false);
         var result = _matriculaValidator.TestValidate(dto);
         result.ShouldNotHaveAnyValidationErrors();
     }
@@ -76,9 +76,17 @@ public class ValidatorTests
     [Fact]
     public void Matricula_EmailInvalido_ComErro()
     {
-        var dto    = new MatriculaRequestDto("João Silva", "invalido", null, null);
+        var dto    = new MatriculaRequestDto("João Silva", "invalido", null, null, null, null, null, true, false);
         var result = _matriculaValidator.TestValidate(dto);
         result.ShouldHaveValidationErrorFor(x => x.Email);
+    }
+
+    [Fact]
+    public void Matricula_AceitaTermosFalso_ComErro()
+    {
+        var dto    = new MatriculaRequestDto("João Silva", "joao@email.com", null, null, null, null, null, false, false);
+        var result = _matriculaValidator.TestValidate(dto);
+        result.ShouldHaveValidationErrorFor(x => x.AceitaTermos);
     }
 
     // ── PedidoVibracaoRequestValidator ────────────────────────
