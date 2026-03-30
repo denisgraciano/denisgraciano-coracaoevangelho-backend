@@ -46,12 +46,20 @@ public record MatriculaRequestDto(
     string NomeCompleto,
     string Email,
     string? Telefone,
-    EnderecoDto? Endereco
+    string? Cpf,
+    string? DataNascimento,
+    EnderecoDto? Endereco,
+    string? Observacoes,
+    bool AceitaTermos,
+    bool ReceberEmails
 );
 
 public record EnderecoDto(
     string? Cep,
     string? Logradouro,
+    string? Numero,
+    string? Complemento,
+    string? Bairro,
     string? Cidade,
     string? Estado
 );

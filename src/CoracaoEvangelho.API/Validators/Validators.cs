@@ -50,6 +50,9 @@ public class MatriculaRequestValidator : AbstractValidator<MatriculaRequestDto>
 
         RuleFor(x => x.Email)
             .NotEmpty().EmailAddress().WithMessage("E-mail inválido.");
+
+        RuleFor(x => x.AceitaTermos)
+            .Equal(true).WithMessage("É necessário aceitar os termos para realizar a inscrição.");
     }
 }
 

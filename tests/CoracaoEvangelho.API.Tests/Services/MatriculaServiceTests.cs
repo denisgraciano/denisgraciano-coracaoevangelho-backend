@@ -23,7 +23,7 @@ public class MatriculaServiceTests
     };
 
     private static MatriculaRequestDto DtoFake() =>
-        new("João Silva", "joao@email.com", null, null);
+        new("João Silva", "joao@email.com", null, null, null, null, null, true, false);
 
     // ── Inscrever ─────────────────────────────────────────────
 
