@@ -242,14 +242,13 @@ namespace CoracaoEvangelho.API.Migrations
                         .HasColumnType("varchar(20)");
 
                     b.Property<string>("UsuarioId")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CursoId");
 
-                    b.HasIndex("UsuarioId", "CursoId")
+                    b.HasIndex("Email", "CursoId")
                         .IsUnique();
 
                     b.ToTable("Matriculas");
@@ -448,8 +447,7 @@ namespace CoracaoEvangelho.API.Migrations
                     b.HasOne("CoracaoEvangelho.API.Models.Usuario", "Usuario")
                         .WithMany("Matriculas")
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Curso");
 

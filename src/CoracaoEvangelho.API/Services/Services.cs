@@ -270,17 +270,19 @@ public class MatriculaService : IMatriculaService
     }
 
     public async Task<MatriculaResponseDto> InscreverAsync(
-        string usuarioId, string cursoId,
+        string? usuarioId, string cursoId,
         MatriculaRequestDto dto, CancellationToken ct = default)
     {
         var curso = await _cursoRepo.GetByIdComAulasAsync(cursoId, ct)
             ?? throw new KeyNotFoundException($"Curso '{cursoId}' não encontrado.");
 
+        var emailNorm = dto.Email.Trim().ToLower();
+
         var jaMatriculado = await _matriculaRepo
-            .GetByUsuarioCursoAsync(usuarioId, cursoId, ct);
+            .GetByEmailCursoAsync(emailNorm, cursoId, ct);
 
         if (jaMatriculado is not null)
-            throw new InvalidOperationException("Você já está matriculado neste curso.");
+            throw new InvalidOperationException("Este e-mail já possui uma inscrição ativa neste curso.");
 
         var matricula = new Matricula
         {
@@ -289,7 +291,7 @@ public class MatriculaService : IMatriculaService
             DataMatricula  = DateTime.UtcNow,
             Ativa          = true,
             NomeCompleto   = dto.NomeCompleto.Trim(),
-            Email          = dto.Email.Trim().ToLower(),
+            Email          = emailNorm,
             Telefone       = dto.Telefone?.Trim(),
             Cpf            = dto.Cpf?.Trim(),
             DataNascimento = dto.DataNascimento,
@@ -562,8 +564,8 @@ public class AdminService : IAdminService
             Items: itens.Select(m => new MatriculaAdminDto(
                 m.Id,
                 m.UsuarioId,
-                m.Usuario.Nome,
-                m.Usuario.Email,
+                m.Usuario?.Nome ?? m.NomeCompleto,
+                m.Usuario?.Email ?? m.Email,
                 m.CursoId,
                 m.Curso.Titulo,
                 m.DataMatricula,
