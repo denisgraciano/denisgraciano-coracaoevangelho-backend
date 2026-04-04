@@ -77,10 +77,10 @@ public class MatriculaController : ControllerBase
     /// </summary>
     [HttpGet("{cursoId}/check")]
     [SwaggerOperation(Summary = "Verifica se aluno está matriculado", Tags = new[] { "Matrículas" })]
-    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<MatriculaCheckResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Check(string cursoId, CancellationToken ct)
     {
         var estaMatriculado = await _matriculaService.EstaMatriculadoAsync(UsuarioId, cursoId, ct);
-        return Ok(ApiResponse<bool>.Ok(estaMatriculado));
+        return Ok(ApiResponse<MatriculaCheckResponseDto>.Ok(new MatriculaCheckResponseDto(estaMatriculado)));
     }
 }
