@@ -32,7 +32,8 @@ public interface ICursoService
 // ── IMatriculaService ─────────────────────────────────────────
 public interface IMatriculaService
 {
-    Task<MatriculaResponseDto> InscreverAsync(string usuarioId, string cursoId, MatriculaRequestDto dto, CancellationToken ct = default);
+    /// <param name="usuarioId">Null quando a inscrição é feita sem login (rota pública).</param>
+    Task<MatriculaResponseDto> InscreverAsync(string? usuarioId, string cursoId, MatriculaRequestDto dto, CancellationToken ct = default);
     Task<bool> EstaMatriculadoAsync(string usuarioId, string cursoId, CancellationToken ct = default);
 }
 

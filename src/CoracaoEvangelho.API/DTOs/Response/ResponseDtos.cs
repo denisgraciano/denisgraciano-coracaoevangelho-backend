@@ -97,6 +97,10 @@ public record AulaResponseDto(
     int Ordem
 );
 
+// ── Matrícula — check de inscrição ───────────────────────────
+// Espelha: { matriculado: boolean } — usado pelo DetalhesCursoComponent
+public record MatriculaCheckResponseDto(bool Matriculado);
+
 // ── Matrícula ─────────────────────────────────────────────────
 public record MatriculaResponseDto(
     string Id,
