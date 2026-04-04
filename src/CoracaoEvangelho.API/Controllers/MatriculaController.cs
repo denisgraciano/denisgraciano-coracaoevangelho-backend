@@ -23,7 +23,6 @@ namespace CoracaoEvangelho.API.Controllers;
 [ApiController]
 [Route("api/matriculas")]
 [Produces("application/json")]
-[Authorize]
 public class MatriculaController : ControllerBase
 {
     private readonly IMatriculaService _matriculaService;
