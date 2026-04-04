@@ -12,18 +12,17 @@ namespace CoracaoEvangelho.API.Controllers;
 /// Inscrição de alunos em cursos.
 ///
 /// Contrato com Angular:
-/// | Método | Rota                           | Auth | Componente Angular         |
-/// |--------|--------------------------------|------|----------------------------|
-/// | POST   | /api/matriculas/{cursoId}      | ✅   | InscricaoCursoComponent    |
-/// | GET    | /api/matriculas/{cursoId}/check| ✅   | DetalhesCursoComponent     |
+/// | Método | Rota                           | Auth     | Componente Angular         |
+/// |--------|--------------------------------|----------|----------------------------|
+/// | POST   | /api/matriculas/{cursoId}      | pública  | InscricaoCursoComponent    |
+/// | GET    | /api/matriculas/{cursoId}/check| ✅       | DetalhesCursoComponent     |
 ///
-/// Substitui InscricaoService.inscrever() que hoje chama /inscricoes.
-/// O frontend usa: POST /inscricoes → deve ser atualizado para POST /api/matriculas/{cursoId}
+/// POST é público: qualquer visitante pode se inscrever sem ter conta.
+/// O userId é vinculado se o usuário estiver logado; caso contrário fica null.
 /// </summary>
 [ApiController]
 [Route("api/matriculas")]
 [Produces("application/json")]
-[Authorize]
 public class MatriculaController : ControllerBase
 {
     private readonly IMatriculaService _matriculaService;
@@ -31,34 +30,21 @@ public class MatriculaController : ControllerBase
     public MatriculaController(IMatriculaService matriculaService) =>
         _matriculaService = matriculaService;
 
-    private string UsuarioId => User.GetUserId();
+    // Retorna null quando a requisição é anônima (sem JWT)
+    private string? UsuarioIdOuNulo =>
+        User.Identity?.IsAuthenticated == true
+            ? User.FindFirst("userId")?.Value
+            : null;
 
     /// <summary>
-    /// Inscreve o aluno autenticado no curso.
-    /// Retorna 409 se o aluno já estiver matriculado (sem duplicata).
+    /// Inscreve o visitante no curso — rota pública, sem necessidade de login.
+    /// Retorna 409 se o mesmo e-mail já estiver inscrito neste curso.
     /// </summary>
-    /// <remarks>
-    /// Request body (campos do formulário InscricaoCursoComponent):
-    /// ```json
-    /// {
-    ///   "nomeCompleto": "João Silva",
-    ///   "email": "joao@email.com",
-    ///   "telefone": null,
-    ///   "endereco": { "cep": "01310-100", "logradouro": "Av. Paulista", "cidade": "São Paulo", "estado": "SP" }
-    /// }
-    /// ```
-    /// Response 201:
-    /// ```json
-    /// {
-    ///   "success": true,
-    ///   "data": { "id": "...", "cursoId": "espiritismo-basico", "cursoTitulo": "Fundamentos...", "dataMatricula": "2026-03-18T...", "ativa": true },
-    ///   "message": "Inscrição realizada com sucesso!"
-    /// }
-    /// ```
-    /// </remarks>
     [HttpPost("{cursoId}")]
-    [SwaggerOperation(Summary = "Inscreve aluno no curso", Tags = new[] { "Matrículas" })]
+    [AllowAnonymous]
+    [SwaggerOperation(Summary = "Inscreve aluno no curso (público)", Tags = new[] { "Matrículas" })]
     [ProducesResponseType(typeof(ApiResponse<MatriculaResponseDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Inscrever(
@@ -66,7 +52,7 @@ public class MatriculaController : ControllerBase
         [FromBody] MatriculaRequestDto dto,
         CancellationToken ct)
     {
-        var matricula = await _matriculaService.InscreverAsync(UsuarioId, cursoId, dto, ct);
+        var matricula = await _matriculaService.InscreverAsync(UsuarioIdOuNulo, cursoId, dto, ct);
         return StatusCode(StatusCodes.Status201Created,
             ApiResponse<MatriculaResponseDto>.Ok(matricula, "Inscrição realizada com sucesso!"));
     }
@@ -76,6 +62,7 @@ public class MatriculaController : ControllerBase
     /// Usado pelo DetalhesCursoComponent para mostrar/ocultar botão de inscrição.
     /// </summary>
     [HttpGet("{cursoId}/check")]
+    [Authorize]
     [SwaggerOperation(Summary = "Verifica se aluno está matriculado", Tags = new[] { "Matrículas" })]
     [ProducesResponseType(typeof(ApiResponse<MatriculaCheckResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Check(string cursoId, CancellationToken ct)

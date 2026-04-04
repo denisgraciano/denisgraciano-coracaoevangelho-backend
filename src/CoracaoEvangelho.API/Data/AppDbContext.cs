@@ -82,16 +82,31 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Matricula>(e =>
         {
             e.HasKey(x => x.Id);
+            e.Property(x => x.NomeCompleto).HasMaxLength(150).IsRequired();
+            e.Property(x => x.Email).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Telefone).HasMaxLength(20);
+            e.Property(x => x.Cpf).HasMaxLength(14);
+            e.Property(x => x.DataNascimento).HasMaxLength(10);
+            e.Property(x => x.Observacoes).HasColumnType("TEXT");
+            e.Property(x => x.Cep).HasMaxLength(10);
+            e.Property(x => x.Logradouro).HasMaxLength(300);
+            e.Property(x => x.Numero).HasMaxLength(20);
+            e.Property(x => x.Complemento).HasMaxLength(100);
+            e.Property(x => x.Bairro).HasMaxLength(100);
+            e.Property(x => x.Cidade).HasMaxLength(100);
+            e.Property(x => x.Estado).HasMaxLength(2);
+            // UsuarioId nullable: inscrição pública não exige conta
             e.HasOne(x => x.Usuario)
              .WithMany(x => x.Matriculas)
              .HasForeignKey(x => x.UsuarioId)
-             .OnDelete(DeleteBehavior.Cascade);
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.SetNull);
             e.HasOne(x => x.Curso)
              .WithMany(x => x.Matriculas)
              .HasForeignKey(x => x.CursoId)
              .OnDelete(DeleteBehavior.Cascade);
-            // Impede dupla matrícula no mesmo curso
-            e.HasIndex(x => new { x.UsuarioId, x.CursoId }).IsUnique();
+            // Impede dupla inscrição do mesmo e-mail no mesmo curso
+            e.HasIndex(x => new { x.Email, x.CursoId }).IsUnique();
         });
 
         // ── Progresso ──────────────────────────────────────────

@@ -125,6 +125,13 @@ public class MatriculaRepository : IMatriculaRepository
     private readonly AppDbContext _db;
     public MatriculaRepository(AppDbContext db) => _db = db;
 
+    public Task<Matricula?> GetByEmailCursoAsync(
+        string email, string cursoId, CancellationToken ct = default) =>
+        _db.Matriculas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                m => m.Email == email && m.CursoId == cursoId, ct);
+
     public Task<Matricula?> GetByUsuarioCursoAsync(
         string usuarioId, string cursoId, CancellationToken ct = default) =>
         _db.Matriculas

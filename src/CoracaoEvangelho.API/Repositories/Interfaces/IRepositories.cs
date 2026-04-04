@@ -55,6 +55,8 @@ public interface ICursoRepository
 // ── IMatriculaRepository ──────────────────────────────────────
 public interface IMatriculaRepository
 {
+    /// <summary>Verifica duplicata por e-mail + curso — funciona com e sem login.</summary>
+    Task<Matricula?> GetByEmailCursoAsync(string email, string cursoId, CancellationToken ct = default);
     Task<Matricula?> GetByUsuarioCursoAsync(string usuarioId, string cursoId, CancellationToken ct = default);
     Task<IEnumerable<Matricula>> GetByUsuarioAsync(string usuarioId, CancellationToken ct = default);
     Task<int> CountAllAsync(CancellationToken ct = default);
