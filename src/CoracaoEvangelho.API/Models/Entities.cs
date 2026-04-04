@@ -93,6 +93,25 @@ public class Matricula
     public DateTime DataMatricula { get; set; } = DateTime.UtcNow;
     public bool Ativa { get; set; } = true;
 
+    // Dados do formulário de inscrição (InscricaoCursoComponent)
+    public string NomeCompleto { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? Telefone { get; set; }
+    public string? Cpf { get; set; }
+    public string? DataNascimento { get; set; }
+    public string? Observacoes { get; set; }
+    public bool AceitaTermos { get; set; }
+    public bool ReceberEmails { get; set; }
+
+    // Endereço (ViaCEP)
+    public string? Cep { get; set; }
+    public string? Logradouro { get; set; }
+    public string? Numero { get; set; }
+    public string? Complemento { get; set; }
+    public string? Bairro { get; set; }
+    public string? Cidade { get; set; }
+    public string? Estado { get; set; }
+
     // Navegação
     public Usuario Usuario { get; set; } = null!;
     public Curso Curso { get; set; } = null!;

@@ -284,10 +284,25 @@ public class MatriculaService : IMatriculaService
 
         var matricula = new Matricula
         {
-            UsuarioId     = usuarioId,
-            CursoId       = cursoId,
-            DataMatricula = DateTime.UtcNow,
-            Ativa         = true
+            UsuarioId      = usuarioId,
+            CursoId        = cursoId,
+            DataMatricula  = DateTime.UtcNow,
+            Ativa          = true,
+            NomeCompleto   = dto.NomeCompleto.Trim(),
+            Email          = dto.Email.Trim().ToLower(),
+            Telefone       = dto.Telefone?.Trim(),
+            Cpf            = dto.Cpf?.Trim(),
+            DataNascimento = dto.DataNascimento,
+            Observacoes    = dto.Observacoes?.Trim(),
+            AceitaTermos   = dto.AceitaTermos,
+            ReceberEmails  = dto.ReceberEmails,
+            Cep            = dto.Endereco?.Cep,
+            Logradouro     = dto.Endereco?.Logradouro,
+            Numero         = dto.Endereco?.Numero,
+            Complemento    = dto.Endereco?.Complemento,
+            Bairro         = dto.Endereco?.Bairro,
+            Cidade         = dto.Endereco?.Cidade,
+            Estado         = dto.Endereco?.Estado
         };
 
         await _matriculaRepo.AddAsync(matricula, ct);

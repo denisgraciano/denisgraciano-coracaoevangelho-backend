@@ -51,6 +51,11 @@ public class MatriculaRequestValidator : AbstractValidator<MatriculaRequestDto>
         RuleFor(x => x.Email)
             .NotEmpty().EmailAddress().WithMessage("E-mail inválido.");
 
+        RuleFor(x => x.Cpf)
+            .Matches(@"^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$")
+            .WithMessage("CPF inválido. Informe 11 dígitos (com ou sem formatação).")
+            .When(x => !string.IsNullOrWhiteSpace(x.Cpf));
+
         RuleFor(x => x.AceitaTermos)
             .Equal(true).WithMessage("É necessário aceitar os termos para realizar a inscrição.");
     }
