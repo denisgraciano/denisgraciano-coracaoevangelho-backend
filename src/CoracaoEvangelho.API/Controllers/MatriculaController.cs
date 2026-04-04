@@ -12,13 +12,13 @@ namespace CoracaoEvangelho.API.Controllers;
 /// Inscrição de alunos em cursos.
 ///
 /// Contrato com Angular:
-/// | Método | Rota                           | Auth     | Componente Angular         |
-/// |--------|--------------------------------|----------|----------------------------|
-/// | POST   | /api/matriculas/{cursoId}      | pública  | InscricaoCursoComponent    |
-/// | GET    | /api/matriculas/{cursoId}/check| ✅       | DetalhesCursoComponent     |
+/// | Método | Rota                           | Auth    | Componente Angular         |
+/// |--------|--------------------------------|---------|----------------------------|
+/// | POST   | /api/matriculas/{cursoId}      | pública | InscricaoCursoComponent    |
+/// | GET    | /api/matriculas/{cursoId}/check| ✅      | DetalhesCursoComponent     |
 ///
-/// POST é público: qualquer visitante pode se inscrever sem ter conta.
-/// O userId é vinculado se o usuário estiver logado; caso contrário fica null.
+/// POST é público: qualquer visitante pode se inscrever sem conta.
+/// O userId é vinculado automaticamente quando o usuário estiver logado.
 /// </summary>
 [ApiController]
 [Route("api/matriculas")]
@@ -30,11 +30,14 @@ public class MatriculaController : ControllerBase
     public MatriculaController(IMatriculaService matriculaService) =>
         _matriculaService = matriculaService;
 
-    // Retorna null quando a requisição é anônima (sem JWT)
+    // Retorna null para requisições anônimas (sem JWT válido)
     private string? UsuarioIdOuNulo =>
         User.Identity?.IsAuthenticated == true
             ? User.FindFirst("userId")?.Value
             : null;
+
+    // Usado apenas em rotas com [Authorize], onde o claim é garantido
+    private string UsuarioId => User.GetUserId();
 
     /// <summary>
     /// Inscreve o visitante no curso — rota pública, sem necessidade de login.
@@ -58,8 +61,8 @@ public class MatriculaController : ControllerBase
     }
 
     /// <summary>
-    /// Verifica se o aluno já está matriculado no curso.
-    /// Usado pelo DetalhesCursoComponent para mostrar/ocultar botão de inscrição.
+    /// Verifica se o aluno autenticado já está matriculado no curso.
+    /// Usado pelo DetalhesCursoComponent para mostrar/ocultar o botão "Inscrever-se".
     /// </summary>
     [HttpGet("{cursoId}/check")]
     [Authorize]
