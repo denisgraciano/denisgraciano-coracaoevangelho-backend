@@ -55,14 +55,17 @@ public record CategoriaResponseDto(
 );
 
 // ── Curso completo (com aulas) ────────────────────────────────
-// Espelha: interface CursoAluno { id, titulo, descricao, categoria,
-//           imagemUrl, instrutor, totalAulas, aulas, certificadoDisponivel }
-// categoria: string com o NOME (não o ID) — o frontend usa diretamente no template
+// Espelha: interface CursoAluno / CursoDetalhe
+//   { id, titulo, descricao, categoria, categoriaId?, imagemUrl,
+//     instrutor, totalAulas, aulas, certificadoDisponivel }
+// categoria: string com o NOME — o frontend usa diretamente no template
+// categoriaId: ID da categoria — usado pelo admin para pre-selecionar o select
 public record CursoResponseDto(
     string Id,
     string Titulo,
     string Descricao,
     string Categoria,
+    string? CategoriaId,
     string ImagemUrl,
     string Instrutor,
     int TotalAulas,
@@ -72,11 +75,13 @@ public record CursoResponseDto(
 
 // ── Curso resumo (sem aulas) ──────────────────────────────────
 // Usado em listagens para manter payload leve (HomeComponent)
+// categoriaId: opcional — necessário para o admin saber qual categoria editar
 public record CursoResumoResponseDto(
     string Id,
     string Titulo,
     string Descricao,
     string Categoria,
+    string? CategoriaId,
     string ImagemUrl,
     string Instrutor,
     int TotalAulas,
@@ -157,12 +162,14 @@ public record UsuarioAdminDto(
 );
 
 // ── Admin — Curso completo (inclui inativos) ───────────────────
+// Espelha: interface CursoDetalhe extends CursoResumo + campos admin extras
+// categoria: campo nomeado igual ao do CursoResumo do Angular (não CategoriaNome)
 public record CursoAdminResponseDto(
     string Id,
     string Titulo,
     string Descricao,
     string? CategoriaId,
-    string? CategoriaNome,
+    string? Categoria,
     string ImagemUrl,
     string Instrutor,
     bool CertificadoDisponivel,

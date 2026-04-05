@@ -237,6 +237,7 @@ public class CursoService : ICursoService
     private static CursoResumoResponseDto MapResumo(Curso c) =>
         new(c.Id, c.Titulo, c.Descricao,
             c.Categoria?.Nome ?? string.Empty,
+            c.CategoriaId,
             c.ImagemUrl, c.Instrutor,
             c.Aulas.Count(a => a.Ativa),
             c.CertificadoDisponivel);
@@ -244,6 +245,7 @@ public class CursoService : ICursoService
     private static CursoResponseDto MapCompleto(Curso c) =>
         new(c.Id, c.Titulo, c.Descricao,
             c.Categoria?.Nome ?? string.Empty,
+            c.CategoriaId,
             c.ImagemUrl, c.Instrutor,
             c.Aulas.Count(a => a.Ativa),
             c.CertificadoDisponivel,
