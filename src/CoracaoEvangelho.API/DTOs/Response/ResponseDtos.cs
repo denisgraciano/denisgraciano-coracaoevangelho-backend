@@ -54,20 +54,41 @@ public record CategoriaResponseDto(
     int TotalCursos
 );
 
-// ── Curso completo (com aulas) ────────────────────────────────
-// Espelha: interface CursoAluno / CursoDetalhe
-//   { id, titulo, descricao, categoria, categoriaId?, imagemUrl,
-//     instrutor, totalAulas, aulas, certificadoDisponivel }
-// categoria: string com o NOME — o frontend usa diretamente no template
-// categoriaId: ID da categoria — usado pelo admin para pre-selecionar o select
+// ── Depoimento ────────────────────────────────────────────────
+// Espelha: depoimentos: { nome, comentario, nota }[] em Curso (curso.model.ts)
+public record DepoimentoResponseDto(
+    string Nome,
+    string Comentario,
+    int Nota
+);
+
+// ── Curso completo (com aulas e depoimentos) ──────────────────
+// Espelha: interface Curso (detalhes-curso/curso.model.ts) — todos os campos
+// usados por DetalhesCursoComponent na rota /curso/:id.
+// imagemUrl: mesmo nome que no admin (não "imagem") — atualizado no modelo Angular
+// vagasDisponiveis: computado como Vagas - matriculas ativas
 public record CursoResponseDto(
     string Id,
     string Titulo,
-    string Descricao,
     string Categoria,
     string? CategoriaId,
-    string ImagemUrl,
     string Instrutor,
+    string? Duracao,
+    string Descricao,
+    IEnumerable<string> Objetivos,
+    IEnumerable<string> ConteudoProgramatico,
+    IEnumerable<string> Requisitos,
+    string? Certificacao,
+    string? Modalidade,
+    string? DataInicio,
+    string? DataFim,
+    string? Horario,
+    int Vagas,
+    int VagasDisponiveis,
+    string ImagemUrl,
+    string? Nivel,
+    IEnumerable<string> Tags,
+    IEnumerable<DepoimentoResponseDto> Depoimentos,
     int TotalAulas,
     bool CertificadoDisponivel,
     IEnumerable<AulaResponseDto> Aulas

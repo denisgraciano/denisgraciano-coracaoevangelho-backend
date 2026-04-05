@@ -243,10 +243,27 @@ public class CursoService : ICursoService
             c.CertificadoDisponivel);
 
     private static CursoResponseDto MapCompleto(Curso c) =>
-        new(c.Id, c.Titulo, c.Descricao,
+        new(c.Id,
+            c.Titulo,
             c.Categoria?.Nome ?? string.Empty,
             c.CategoriaId,
-            c.ImagemUrl, c.Instrutor,
+            c.Instrutor,
+            c.Duracao,
+            c.Descricao,
+            DeserializarArray(c.ObjetivosJson),
+            DeserializarArray(c.ConteudoProgramaticoJson),
+            DeserializarArray(c.RequisitosJson),
+            c.Certificacao,
+            c.Modalidade,
+            c.DataInicio,
+            c.DataFim,
+            c.Horario,
+            c.Vagas,
+            Math.Max(0, c.Vagas - c.Matriculas.Count(m => m.Ativa)),
+            c.ImagemUrl,
+            c.Nivel,
+            DeserializarArray(c.TagsJson),
+            c.Depoimentos.Select(d => new DepoimentoResponseDto(d.Nome, d.Comentario, d.Nota)),
             c.Aulas.Count(a => a.Ativa),
             c.CertificadoDisponivel,
             c.Aulas
@@ -255,6 +272,13 @@ public class CursoService : ICursoService
                 .Select(a => new AulaResponseDto(
                     a.Id, a.Titulo, a.Descricao,
                     a.YoutubeVideoId, a.DuracaoMinutos, a.Ordem)));
+
+    private static IEnumerable<string> DeserializarArray(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return System.Text.Json.JsonSerializer.Deserialize<string[]>(json) ?? []; }
+        catch { return []; }
+    }
 }
 
 // ── MatriculaService ──────────────────────────────────────────

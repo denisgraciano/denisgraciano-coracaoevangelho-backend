@@ -66,12 +66,14 @@ public class CursoRepository : ICursoRepository
             .Include(c => c.Aulas.Where(a => a.Ativa))
             .ToListAsync(ct);
 
-    // Inclui aulas para PlayerAulaComponent e DetalhesCursoComponent
+    // Inclui aulas, depoimentos e contagem de matrículas para DetalhesCursoComponent
     public Task<Curso?> GetByIdComAulasAsync(string id, CancellationToken ct = default) =>
         _db.Cursos
             .AsNoTracking()
             .Include(c => c.Categoria)
             .Include(c => c.Aulas.Where(a => a.Ativa))
+            .Include(c => c.Depoimentos)
+            .Include(c => c.Matriculas.Where(m => m.Ativa))
             .FirstOrDefaultAsync(c => c.Id == id, ct);
 
     // Cursos matriculados com aulas (Dashboard + Player)

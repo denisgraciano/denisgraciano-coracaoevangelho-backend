@@ -160,11 +160,84 @@ namespace CoracaoEvangelho.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    // Campos da página de detalhes públicos
+                    b.Property<string>("Duracao")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("ObjetivosJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConteudoProgramaticoJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RequisitosJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Certificacao")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Modalidade")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("DataInicio")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("DataFim")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("Horario")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("Vagas")
+                        .HasDefaultValue(0)
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nivel")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("TagsJson")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoriaId");
 
                     b.ToTable("Cursos");
+                });
+
+            modelBuilder.Entity("CoracaoEvangelho.API.Models.Depoimento", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("CursoId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Comentario")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Nota")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CursoId");
+
+                    b.ToTable("Depoimentos");
                 });
 
             modelBuilder.Entity("CoracaoEvangelho.API.Models.Matricula", b =>
@@ -493,9 +566,22 @@ namespace CoracaoEvangelho.API.Migrations
                     b.Navigation("Cursos");
                 });
 
+            modelBuilder.Entity("CoracaoEvangelho.API.Models.Depoimento", b =>
+                {
+                    b.HasOne("CoracaoEvangelho.API.Models.Curso", "Curso")
+                        .WithMany("Depoimentos")
+                        .HasForeignKey("CursoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Curso");
+                });
+
             modelBuilder.Entity("CoracaoEvangelho.API.Models.Curso", b =>
                 {
                     b.Navigation("Aulas");
+
+                    b.Navigation("Depoimentos");
 
                     b.Navigation("Matriculas");
                 });
