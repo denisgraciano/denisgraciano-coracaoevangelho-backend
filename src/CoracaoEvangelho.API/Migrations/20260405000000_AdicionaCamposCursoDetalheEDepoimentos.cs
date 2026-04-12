@@ -11,12 +11,12 @@ namespace CoracaoEvangelho.API.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // ── Novos campos na tabela Cursos ─────────────────────────────────
-            // Usamos SQL direto para evitar incompatibilidade do Pomelo ao
-            // gerar DDL a partir de MigrationBuilder com tipos anônimos.
+            // SQL direto para evitar incompatibilidade do Pomelo com FK em
+            // CreateTable com tipo anônimo.
             migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Duracao` varchar(100) NULL;");
-            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `ObjetivosJson` TEXT NULL;");
-            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `ConteudoProgramaticoJson` TEXT NULL;");
-            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `RequisitosJson` TEXT NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `ObjetivosJson` LONGTEXT NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `ConteudoProgramaticoJson` LONGTEXT NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `RequisitosJson` LONGTEXT NULL;");
             migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Certificacao` varchar(200) NULL;");
             migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Modalidade` varchar(50) NULL;");
             migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `DataInicio` varchar(10) NULL;");
@@ -24,22 +24,40 @@ namespace CoracaoEvangelho.API.Migrations
             migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Horario` varchar(100) NULL;");
             migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Vagas` int NOT NULL DEFAULT 0;");
             migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Nivel` varchar(50) NULL;");
-            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `TagsJson` TEXT NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `TagsJson` LONGTEXT NULL;");
 
             // ── Nova tabela Depoimentos ───────────────────────────────────────
+            // Pomelo cria os varchar(255) com o mesmo charset/collation do banco,
+            // garantindo compatibilidade com Cursos.Id sem especificar charset manualmente.
+            migrationBuilder.CreateTable(
+                name: "Depoimentos",
+                columns: table => new
+                {
+                    Id        = table.Column<string>(type: "varchar(255)", nullable: false),
+                    CursoId   = table.Column<string>(type: "varchar(255)", nullable: false),
+                    Nome      = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false),
+                    Comentario = table.Column<string>(type: "LONGTEXT", nullable: false),
+                    Nota      = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    // FK adicionada via Sql() separado para evitar bug de geração
+                    // do Pomelo com ForeignKey em tipo anônimo (errava key columns).
+                    table.PrimaryKey("PK_Depoimentos", x => x.Id);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Depoimentos_CursoId",
+                table: "Depoimentos",
+                column: "CursoId");
+
+            // FK adicionada depois da criação da tabela — colunas já têm o
+            // charset correto do Pomelo, evitando incompatibilidade de collation.
             migrationBuilder.Sql(@"
-                CREATE TABLE `Depoimentos` (
-                    `Id`        varchar(255) NOT NULL,
-                    `CursoId`   varchar(255) NOT NULL,
-                    `Nome`      varchar(150) NOT NULL,
-                    `Comentario` TEXT NOT NULL,
-                    `Nota`      int NOT NULL,
-                    PRIMARY KEY (`Id`),
-                    INDEX `IX_Depoimentos_CursoId` (`CursoId`),
-                    CONSTRAINT `FK_Depoimentos_Cursos_CursoId`
-                        FOREIGN KEY (`CursoId`) REFERENCES `Cursos` (`Id`)
-                        ON DELETE CASCADE
-                );
+                ALTER TABLE `Depoimentos`
+                ADD CONSTRAINT `FK_Depoimentos_Cursos_CursoId`
+                FOREIGN KEY (`CursoId`) REFERENCES `Cursos` (`Id`)
+                ON DELETE CASCADE;
             ");
         }
 
