@@ -34,7 +34,7 @@ namespace CoracaoEvangelho.API.Migrations
                 columns: table => new
                 {
                     Id        = table.Column<string>(type: "varchar(255)", nullable: false),
-                    CursoId   = table.Column<string>(type: "varchar(255)", nullable: false),
+                    CursoId   = table.Column<string>(type: "varchar(36)", nullable: false),
                     Nome      = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false),
                     Comentario = table.Column<string>(type: "LONGTEXT", nullable: false),
                     Nota      = table.Column<int>(type: "int", nullable: false)
