@@ -58,6 +58,10 @@ public class MatriculaRequestValidator : AbstractValidator<MatriculaRequestDto>
 
         RuleFor(x => x.AceitaTermos)
             .Equal(true).WithMessage("É necessário aceitar os termos para realizar a inscrição.");
+
+        RuleFor(x => x.Senha)
+            .MinimumLength(6).WithMessage("A senha deve ter no mínimo 6 caracteres.")
+            .When(x => !string.IsNullOrWhiteSpace(x.Senha));
     }
 }
 

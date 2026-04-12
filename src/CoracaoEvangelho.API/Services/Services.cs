@@ -77,6 +77,29 @@ public class AuthService : IAuthService
         return GerarAuthResponse(usuario);
     }
 
+    public async Task<AuthResponseDto?> CriarContaAsync(
+        string nome, string email, string senha, CancellationToken ct = default)
+    {
+        var emailNorm = email.ToLower().Trim();
+
+        if (await _usuarioRepo.GetByEmailAsync(emailNorm, ct) is not null)
+            return null; // E-mail já tem conta — matrícula prossegue sem criar nova
+
+        var usuario = new Usuario
+        {
+            Email        = emailNorm,
+            Nome         = nome.Trim(),
+            SenhaHash    = BCrypt.Net.BCrypt.HashPassword(senha, workFactor: 12),
+            Role         = "aluno",
+            DataCadastro = DateTime.UtcNow
+        };
+
+        GerarRefreshToken(usuario);
+        await _usuarioRepo.AddAsync(usuario, ct);
+        await _usuarioRepo.SaveChangesAsync(ct);
+        return GerarAuthResponse(usuario);
+    }
+
     // ── Privados ──────────────────────────────────────────────
 
     private AuthResponseDto GerarAuthResponse(Usuario usuario)
@@ -288,16 +311,19 @@ public class MatriculaService : IMatriculaService
 {
     private readonly IMatriculaRepository _matriculaRepo;
     private readonly ICursoRepository     _cursoRepo;
+    private readonly IAuthService         _authService;
 
     public MatriculaService(
         IMatriculaRepository matriculaRepo,
-        ICursoRepository cursoRepo)
+        ICursoRepository cursoRepo,
+        IAuthService authService)
     {
         _matriculaRepo = matriculaRepo;
         _cursoRepo     = cursoRepo;
+        _authService   = authService;
     }
 
-    public async Task<MatriculaResponseDto> InscreverAsync(
+    public async Task<InscricaoResponseDto> InscreverAsync(
         string? usuarioId, string cursoId,
         MatriculaRequestDto dto, CancellationToken ct = default)
     {
@@ -306,11 +332,17 @@ public class MatriculaService : IMatriculaService
 
         var emailNorm = dto.Email.Trim().ToLower();
 
-        var jaMatriculado = await _matriculaRepo
-            .GetByEmailCursoAsync(emailNorm, cursoId, ct);
-
-        if (jaMatriculado is not null)
+        if (await _matriculaRepo.GetByEmailCursoAsync(emailNorm, cursoId, ct) is not null)
             throw new InvalidOperationException("Este e-mail já possui uma inscrição ativa neste curso.");
+
+        // Cria conta de aluno automaticamente quando a senha é informada
+        AuthResponseDto? auth = null;
+        if (!string.IsNullOrWhiteSpace(dto.Senha) && usuarioId is null)
+        {
+            auth = await _authService.CriarContaAsync(dto.NomeCompleto, emailNorm, dto.Senha, ct);
+            if (auth is not null)
+                usuarioId = auth.Usuario.Id;
+        }
 
         var matricula = new Matricula
         {
@@ -338,9 +370,9 @@ public class MatriculaService : IMatriculaService
         await _matriculaRepo.AddAsync(matricula, ct);
         await _matriculaRepo.SaveChangesAsync(ct);
 
-        return new MatriculaResponseDto(
+        return new InscricaoResponseDto(
             matricula.Id, cursoId, curso.Titulo,
-            matricula.DataMatricula, matricula.Ativa);
+            matricula.DataMatricula, matricula.Ativa, auth);
     }
 
     public async Task<bool> EstaMatriculadoAsync(

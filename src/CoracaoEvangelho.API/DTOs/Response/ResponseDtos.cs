@@ -138,6 +138,18 @@ public record MatriculaResponseDto(
     bool Ativa
 );
 
+// Retornado pelo POST /api/matriculas/{cursoId}.
+// Auth é preenchido quando uma conta de aluno foi criada automaticamente
+// (campo Senha informado no formulário). Null quando o aluno já tinha conta.
+public record InscricaoResponseDto(
+    string Id,
+    string CursoId,
+    string CursoTitulo,
+    DateTime DataMatricula,
+    bool Ativa,
+    AuthResponseDto? Auth
+);
+
 // ── Progresso por aula ────────────────────────────────────────
 // Espelha: interface ProgressoAula { aulaId, concluida, dataConlusao? }
 // Nota: o Angular usa "dataConlusao" (com typo) — mantemos o contrato no frontend,

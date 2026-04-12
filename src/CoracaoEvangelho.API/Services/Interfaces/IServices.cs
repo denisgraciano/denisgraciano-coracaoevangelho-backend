@@ -9,6 +9,11 @@ public interface IAuthService
     Task<AuthResponseDto> RegistrarAsync(RegisterRequestDto dto, CancellationToken ct = default);
     Task<AuthResponseDto> LoginAsync(LoginRequestDto dto, CancellationToken ct = default);
     Task<AuthResponseDto> RefreshTokenAsync(string refreshToken, CancellationToken ct = default);
+    /// <summary>
+    /// Cria conta de aluno durante a inscrição em um curso.
+    /// Retorna null se o e-mail já possuir conta (sem erro — a matrícula prossegue normalmente).
+    /// </summary>
+    Task<AuthResponseDto?> CriarContaAsync(string nome, string email, string senha, CancellationToken ct = default);
 }
 
 // ── IUsuarioService ───────────────────────────────────────────
@@ -33,7 +38,7 @@ public interface ICursoService
 public interface IMatriculaService
 {
     /// <param name="usuarioId">Null quando a inscrição é feita sem login (rota pública).</param>
-    Task<MatriculaResponseDto> InscreverAsync(string? usuarioId, string cursoId, MatriculaRequestDto dto, CancellationToken ct = default);
+    Task<InscricaoResponseDto> InscreverAsync(string? usuarioId, string cursoId, MatriculaRequestDto dto, CancellationToken ct = default);
     Task<bool> EstaMatriculadoAsync(string usuarioId, string cursoId, CancellationToken ct = default);
 }
 

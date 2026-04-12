@@ -51,7 +51,8 @@ public record MatriculaRequestDto(
     EnderecoDto? Endereco,
     string? Observacoes,
     bool AceitaTermos,
-    bool ReceberEmails
+    bool ReceberEmails,
+    string? Senha   // Quando preenchida, cria conta de aluno automaticamente
 );
 
 public record EnderecoDto(
