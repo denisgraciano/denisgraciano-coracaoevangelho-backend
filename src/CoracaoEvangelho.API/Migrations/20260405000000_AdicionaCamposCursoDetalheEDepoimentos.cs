@@ -10,132 +10,56 @@ namespace CoracaoEvangelho.API.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // ── Novos campos em Cursos (página de detalhes públicos) ──────────
-            migrationBuilder.AddColumn<string>(
-                name: "Duracao",
-                table: "Cursos",
-                type: "varchar(100)",
-                maxLength: 100,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "ObjetivosJson",
-                table: "Cursos",
-                type: "TEXT",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "ConteudoProgramaticoJson",
-                table: "Cursos",
-                type: "TEXT",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "RequisitosJson",
-                table: "Cursos",
-                type: "TEXT",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "Certificacao",
-                table: "Cursos",
-                type: "varchar(200)",
-                maxLength: 200,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "Modalidade",
-                table: "Cursos",
-                type: "varchar(50)",
-                maxLength: 50,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "DataInicio",
-                table: "Cursos",
-                type: "varchar(10)",
-                maxLength: 10,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "DataFim",
-                table: "Cursos",
-                type: "varchar(10)",
-                maxLength: 10,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "Horario",
-                table: "Cursos",
-                type: "varchar(100)",
-                maxLength: 100,
-                nullable: true);
-
-            migrationBuilder.AddColumn<int>(
-                name: "Vagas",
-                table: "Cursos",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.AddColumn<string>(
-                name: "Nivel",
-                table: "Cursos",
-                type: "varchar(50)",
-                maxLength: 50,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "TagsJson",
-                table: "Cursos",
-                type: "TEXT",
-                nullable: true);
+            // ── Novos campos na tabela Cursos ─────────────────────────────────
+            // Usamos SQL direto para evitar incompatibilidade do Pomelo ao
+            // gerar DDL a partir de MigrationBuilder com tipos anônimos.
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Duracao` varchar(100) NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `ObjetivosJson` TEXT NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `ConteudoProgramaticoJson` TEXT NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `RequisitosJson` TEXT NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Certificacao` varchar(200) NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Modalidade` varchar(50) NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `DataInicio` varchar(10) NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `DataFim` varchar(10) NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Horario` varchar(100) NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Vagas` int NOT NULL DEFAULT 0;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `Nivel` varchar(50) NULL;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` ADD COLUMN `TagsJson` TEXT NULL;");
 
             // ── Nova tabela Depoimentos ───────────────────────────────────────
-            migrationBuilder.CreateTable(
-                name: "Depoimentos",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "varchar(255)", nullable: false),
-                    CursoId = table.Column<string>(type: "varchar(255)", nullable: false),
-                    Nome = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false),
-                    Comentario = table.Column<string>(type: "TEXT", nullable: false),
-                    Nota = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Depoimentos", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Depoimentos_Cursos_CursoId",
-                        column: x => x.CursoId,
-                        principalTable: "Cursos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Depoimentos_CursoId",
-                table: "Depoimentos",
-                column: "CursoId");
+            migrationBuilder.Sql(@"
+                CREATE TABLE `Depoimentos` (
+                    `Id`        varchar(255) NOT NULL,
+                    `CursoId`   varchar(255) NOT NULL,
+                    `Nome`      varchar(150) NOT NULL,
+                    `Comentario` TEXT NOT NULL,
+                    `Nota`      int NOT NULL,
+                    PRIMARY KEY (`Id`),
+                    INDEX `IX_Depoimentos_CursoId` (`CursoId`),
+                    CONSTRAINT `FK_Depoimentos_Cursos_CursoId`
+                        FOREIGN KEY (`CursoId`) REFERENCES `Cursos` (`Id`)
+                        ON DELETE CASCADE
+                );
+            ");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(name: "Depoimentos");
+            migrationBuilder.Sql("DROP TABLE IF EXISTS `Depoimentos`;");
 
-            migrationBuilder.DropColumn(name: "Duracao", table: "Cursos");
-            migrationBuilder.DropColumn(name: "ObjetivosJson", table: "Cursos");
-            migrationBuilder.DropColumn(name: "ConteudoProgramaticoJson", table: "Cursos");
-            migrationBuilder.DropColumn(name: "RequisitosJson", table: "Cursos");
-            migrationBuilder.DropColumn(name: "Certificacao", table: "Cursos");
-            migrationBuilder.DropColumn(name: "Modalidade", table: "Cursos");
-            migrationBuilder.DropColumn(name: "DataInicio", table: "Cursos");
-            migrationBuilder.DropColumn(name: "DataFim", table: "Cursos");
-            migrationBuilder.DropColumn(name: "Horario", table: "Cursos");
-            migrationBuilder.DropColumn(name: "Vagas", table: "Cursos");
-            migrationBuilder.DropColumn(name: "Nivel", table: "Cursos");
-            migrationBuilder.DropColumn(name: "TagsJson", table: "Cursos");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `Duracao`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `ObjetivosJson`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `ConteudoProgramaticoJson`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `RequisitosJson`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `Certificacao`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `Modalidade`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `DataInicio`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `DataFim`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `Horario`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `Vagas`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `Nivel`;");
+            migrationBuilder.Sql("ALTER TABLE `Cursos` DROP COLUMN `TagsJson`;");
         }
     }
 }
