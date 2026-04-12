@@ -240,7 +240,9 @@ public class CursoService : ICursoService
             c.CategoriaId,
             c.ImagemUrl, c.Instrutor,
             c.Aulas.Count(a => a.Ativa),
-            c.CertificadoDisponivel);
+            c.CertificadoDisponivel,
+            c.Duracao,
+            c.Vagas);
 
     private static CursoResponseDto MapCompleto(Curso c) =>
         new(c.Id,

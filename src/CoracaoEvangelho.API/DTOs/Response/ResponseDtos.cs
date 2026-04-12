@@ -106,7 +106,9 @@ public record CursoResumoResponseDto(
     string ImagemUrl,
     string Instrutor,
     int TotalAulas,
-    bool CertificadoDisponivel
+    bool CertificadoDisponivel,
+    string? Duracao,
+    int Vagas
 );
 
 // ── Aula ──────────────────────────────────────────────────────
