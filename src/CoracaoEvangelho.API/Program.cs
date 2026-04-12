@@ -186,14 +186,17 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
 
-// ── Seed de desenvolvimento ───────────────────────────────────
-if (app.Environment.IsDevelopment())
+// ── Migrations pendentes + Seed de desenvolvimento ───────────
+using (var scope = app.Services.CreateScope())
 {
-    using var scope  = app.Services.CreateScope();
     var db           = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var seederLogger = scope.ServiceProvider
-                            .GetRequiredService<ILogger<Program>>();
-    await DbSeeder.SeedAsync(db, seederLogger);
+    var seederLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    // Aplica migrations pendentes automaticamente ao iniciar
+    await db.Database.MigrateAsync();
+
+    if (app.Environment.IsDevelopment())
+        await DbSeeder.SeedAsync(db, seederLogger);
 }
 
 // ── Logs de inicialização ─────────────────────────────────────
