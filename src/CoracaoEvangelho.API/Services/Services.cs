@@ -146,7 +146,7 @@ public class AuthService : IAuthService
     {
         // 64 bytes de entropia criptográfica → base64 de 88 chars
         usuario.RefreshToken       = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-        usuario.RefreshTokenExpira = DateTime.UtcNow.AddDays(7);
+        usuario.RefreshTokenExpira = DateTime.UtcNow.AddDays(1);
     }
 }
 
