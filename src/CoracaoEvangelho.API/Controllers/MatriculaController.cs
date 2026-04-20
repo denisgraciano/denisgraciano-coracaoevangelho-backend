@@ -46,7 +46,7 @@ public class MatriculaController : ControllerBase
     [HttpPost("{cursoId}")]
     [AllowAnonymous]
     [SwaggerOperation(Summary = "Inscreve aluno no curso (público)", Tags = new[] { "Matrículas" })]
-    [ProducesResponseType(typeof(ApiResponse<MatriculaResponseDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<InscricaoResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
@@ -55,9 +55,9 @@ public class MatriculaController : ControllerBase
         [FromBody] MatriculaRequestDto dto,
         CancellationToken ct)
     {
-        var matricula = await _matriculaService.InscreverAsync(UsuarioIdOuNulo, cursoId, dto, ct);
+        var inscricao = await _matriculaService.InscreverAsync(UsuarioIdOuNulo, cursoId, dto, ct);
         return StatusCode(StatusCodes.Status201Created,
-            ApiResponse<MatriculaResponseDto>.Ok(matricula, "Inscrição realizada com sucesso!"));
+            ApiResponse<InscricaoResponseDto>.Ok(inscricao, "Inscrição realizada com sucesso!"));
     }
 
     /// <summary>

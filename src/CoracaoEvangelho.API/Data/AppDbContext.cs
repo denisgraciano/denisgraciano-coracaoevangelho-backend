@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Categoria> Categorias => Set<Categoria>();
     public DbSet<Curso> Cursos => Set<Curso>();
     public DbSet<Aula> Aulas => Set<Aula>();
+    public DbSet<Depoimento> Depoimentos => Set<Depoimento>();
     public DbSet<Matricula> Matriculas => Set<Matricula>();
     public DbSet<Progresso> Progressos => Set<Progresso>();
     public DbSet<Certificado> Certificados => Set<Certificado>();
@@ -55,11 +56,37 @@ public class AppDbContext : DbContext
             e.Property(x => x.Descricao).HasColumnType("TEXT").IsRequired();
             e.Property(x => x.ImagemUrl).HasMaxLength(500);
             e.Property(x => x.Instrutor).HasMaxLength(150);
+            // Campos da página de detalhes públicos
+            e.Property(x => x.Duracao).HasMaxLength(100);
+            e.Property(x => x.ObjetivosJson).HasColumnType("TEXT");
+            e.Property(x => x.ConteudoProgramaticoJson).HasColumnType("TEXT");
+            e.Property(x => x.RequisitosJson).HasColumnType("TEXT");
+            e.Property(x => x.Certificacao).HasMaxLength(200);
+            e.Property(x => x.Modalidade).HasMaxLength(50);
+            e.Property(x => x.DataInicio).HasMaxLength(10);
+            e.Property(x => x.DataFim).HasMaxLength(10);
+            e.Property(x => x.Horario).HasMaxLength(100);
+            e.Property(x => x.Vagas).HasDefaultValue(0);
+            e.Property(x => x.Nivel).HasMaxLength(50);
+            e.Property(x => x.TagsJson).HasColumnType("TEXT");
             e.HasOne(x => x.Categoria)
              .WithMany(x => x.Cursos)
              .HasForeignKey(x => x.CategoriaId)
              .OnDelete(DeleteBehavior.SetNull);
             e.HasQueryFilter(x => x.Ativo);  // soft delete via flag
+        });
+
+        // ── Depoimento ─────────────────────────────────────────
+        modelBuilder.Entity<Depoimento>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Nome).HasMaxLength(150).IsRequired();
+            e.Property(x => x.Comentario).HasColumnType("TEXT").IsRequired();
+            e.Property(x => x.Nota).IsRequired();
+            e.HasOne(x => x.Curso)
+             .WithMany(x => x.Depoimentos)
+             .HasForeignKey(x => x.CursoId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── Aula ───────────────────────────────────────────────

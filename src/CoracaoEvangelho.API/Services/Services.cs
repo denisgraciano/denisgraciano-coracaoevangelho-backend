@@ -77,6 +77,29 @@ public class AuthService : IAuthService
         return GerarAuthResponse(usuario);
     }
 
+    public async Task<AuthResponseDto?> CriarContaAsync(
+        string nome, string email, string senha, CancellationToken ct = default)
+    {
+        var emailNorm = email.ToLower().Trim();
+
+        if (await _usuarioRepo.GetByEmailAsync(emailNorm, ct) is not null)
+            return null; // E-mail já tem conta — matrícula prossegue sem criar nova
+
+        var usuario = new Usuario
+        {
+            Email        = emailNorm,
+            Nome         = nome.Trim(),
+            SenhaHash    = BCrypt.Net.BCrypt.HashPassword(senha, workFactor: 12),
+            Role         = "aluno",
+            DataCadastro = DateTime.UtcNow
+        };
+
+        GerarRefreshToken(usuario);
+        await _usuarioRepo.AddAsync(usuario, ct);
+        await _usuarioRepo.SaveChangesAsync(ct);
+        return GerarAuthResponse(usuario);
+    }
+
     // ── Privados ──────────────────────────────────────────────
 
     private AuthResponseDto GerarAuthResponse(Usuario usuario)
@@ -123,7 +146,7 @@ public class AuthService : IAuthService
     {
         // 64 bytes de entropia criptográfica → base64 de 88 chars
         usuario.RefreshToken       = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-        usuario.RefreshTokenExpira = DateTime.UtcNow.AddDays(7);
+        usuario.RefreshTokenExpira = DateTime.UtcNow.AddDays(1);
     }
 }
 
@@ -237,14 +260,35 @@ public class CursoService : ICursoService
     private static CursoResumoResponseDto MapResumo(Curso c) =>
         new(c.Id, c.Titulo, c.Descricao,
             c.Categoria?.Nome ?? string.Empty,
+            c.CategoriaId,
             c.ImagemUrl, c.Instrutor,
             c.Aulas.Count(a => a.Ativa),
-            c.CertificadoDisponivel);
+            c.CertificadoDisponivel,
+            c.Duracao,
+            c.Vagas);
 
     private static CursoResponseDto MapCompleto(Curso c) =>
-        new(c.Id, c.Titulo, c.Descricao,
+        new(c.Id,
+            c.Titulo,
             c.Categoria?.Nome ?? string.Empty,
-            c.ImagemUrl, c.Instrutor,
+            c.CategoriaId,
+            c.Instrutor,
+            c.Duracao,
+            c.Descricao,
+            DeserializarArray(c.ObjetivosJson),
+            DeserializarArray(c.ConteudoProgramaticoJson),
+            DeserializarArray(c.RequisitosJson),
+            c.Certificacao,
+            c.Modalidade,
+            c.DataInicio,
+            c.DataFim,
+            c.Horario,
+            c.Vagas,
+            Math.Max(0, c.Vagas - c.Matriculas.Count(m => m.Ativa)),
+            c.ImagemUrl,
+            c.Nivel,
+            DeserializarArray(c.TagsJson),
+            c.Depoimentos.Select(d => new DepoimentoResponseDto(d.Nome, d.Comentario, d.Nota)),
             c.Aulas.Count(a => a.Ativa),
             c.CertificadoDisponivel,
             c.Aulas
@@ -253,6 +297,13 @@ public class CursoService : ICursoService
                 .Select(a => new AulaResponseDto(
                     a.Id, a.Titulo, a.Descricao,
                     a.YoutubeVideoId, a.DuracaoMinutos, a.Ordem)));
+
+    private static IEnumerable<string> DeserializarArray(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return System.Text.Json.JsonSerializer.Deserialize<string[]>(json) ?? []; }
+        catch { return []; }
+    }
 }
 
 // ── MatriculaService ──────────────────────────────────────────
@@ -260,16 +311,19 @@ public class MatriculaService : IMatriculaService
 {
     private readonly IMatriculaRepository _matriculaRepo;
     private readonly ICursoRepository     _cursoRepo;
+    private readonly IAuthService         _authService;
 
     public MatriculaService(
         IMatriculaRepository matriculaRepo,
-        ICursoRepository cursoRepo)
+        ICursoRepository cursoRepo,
+        IAuthService authService)
     {
         _matriculaRepo = matriculaRepo;
         _cursoRepo     = cursoRepo;
+        _authService   = authService;
     }
 
-    public async Task<MatriculaResponseDto> InscreverAsync(
+    public async Task<InscricaoResponseDto> InscreverAsync(
         string? usuarioId, string cursoId,
         MatriculaRequestDto dto, CancellationToken ct = default)
     {
@@ -278,11 +332,17 @@ public class MatriculaService : IMatriculaService
 
         var emailNorm = dto.Email.Trim().ToLower();
 
-        var jaMatriculado = await _matriculaRepo
-            .GetByEmailCursoAsync(emailNorm, cursoId, ct);
-
-        if (jaMatriculado is not null)
+        if (await _matriculaRepo.GetByEmailCursoAsync(emailNorm, cursoId, ct) is not null)
             throw new InvalidOperationException("Este e-mail já possui uma inscrição ativa neste curso.");
+
+        // Cria conta de aluno automaticamente quando a senha é informada
+        AuthResponseDto? auth = null;
+        if (!string.IsNullOrWhiteSpace(dto.Senha) && usuarioId is null)
+        {
+            auth = await _authService.CriarContaAsync(dto.NomeCompleto, emailNorm, dto.Senha, ct);
+            if (auth is not null)
+                usuarioId = auth.Usuario.Id;
+        }
 
         var matricula = new Matricula
         {
@@ -310,9 +370,9 @@ public class MatriculaService : IMatriculaService
         await _matriculaRepo.AddAsync(matricula, ct);
         await _matriculaRepo.SaveChangesAsync(ct);
 
-        return new MatriculaResponseDto(
+        return new InscricaoResponseDto(
             matricula.Id, cursoId, curso.Titulo,
-            matricula.DataMatricula, matricula.Ativa);
+            matricula.DataMatricula, matricula.Ativa, auth);
     }
 
     public async Task<bool> EstaMatriculadoAsync(

@@ -42,8 +42,8 @@ public class Categoria
 }
 
 // ── Curso ─────────────────────────────────────────────────────
-// Espelha: interface CursoAluno { id, titulo, descricao, categoria,
-//           imagemUrl, instrutor, totalAulas, aulas, certificadoDisponivel }
+// Espelha: interface Curso (detalhes-curso/curso.model.ts) — modelo completo
+// da página pública de detalhes do curso.
 public class Curso
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -57,10 +57,40 @@ public class Curso
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
 
+    // Campos da página de detalhes públicos (DetalhesCursoComponent)
+    public string? Duracao { get; set; }
+    public string? ObjetivosJson { get; set; }           // JSON: string[]
+    public string? ConteudoProgramaticoJson { get; set; } // JSON: string[]
+    public string? RequisitosJson { get; set; }          // JSON: string[]
+    public string? Certificacao { get; set; }
+    public string? Modalidade { get; set; }
+    public string? DataInicio { get; set; }
+    public string? DataFim { get; set; }
+    public string? Horario { get; set; }
+    public int Vagas { get; set; } = 0;
+    public string? Nivel { get; set; }
+    public string? TagsJson { get; set; }                // JSON: string[]
+
     // Calculado — não persiste: int TotalAulas → via Aulas.Count()
+    // VagasDisponiveis → Vagas - Matriculas.Count(m => m.Ativa)
     public Categoria? Categoria { get; set; }
     public ICollection<Aula> Aulas { get; set; } = new List<Aula>();
     public ICollection<Matricula> Matriculas { get; set; } = new List<Matricula>();
+    public ICollection<Depoimento> Depoimentos { get; set; } = new List<Depoimento>();
+}
+
+// ── Depoimento ────────────────────────────────────────────────
+// Espelha: depoimentos: { nome, comentario, nota }[] em Curso (curso.model.ts)
+public class Depoimento
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string CursoId { get; set; } = string.Empty;
+    public string Nome { get; set; } = string.Empty;
+    public string Comentario { get; set; } = string.Empty;
+    public int Nota { get; set; }  // 1–5
+
+    // Navegação
+    public Curso Curso { get; set; } = null!;
 }
 
 // ── Aula ──────────────────────────────────────────────────────
