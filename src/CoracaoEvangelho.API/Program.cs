@@ -213,7 +213,10 @@ using (var scope = app.Services.CreateScope())
 Log.Information("Coração Evangelho API iniciada. Ambiente: {Env}", app.Environment.EnvironmentName);
 Log.Information("Frontend configurado: {Url}", frontendUrl);
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-app.Urls.Add($"http://*:{port}");
+if (!app.Environment.IsDevelopment())
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+    app.Urls.Add($"http://*:{port}");
+}
 
 app.Run();
