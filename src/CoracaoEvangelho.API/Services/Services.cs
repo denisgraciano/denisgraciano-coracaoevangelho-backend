@@ -855,3 +855,28 @@ public class PedidoVibracaoService : IPedidoVibracaoService
         );
     }
 }
+
+// ── CategoriaService ──────────────────────────────────────────
+public class CategoriaService : ICategoriaService
+{
+    private readonly ICategoriaRepository _categoriaRepo;
+
+    public CategoriaService(ICategoriaRepository categoriaRepo) =>
+        _categoriaRepo = categoriaRepo;
+
+    public async Task<IEnumerable<CategoriaResponseDto>> GetAllAsync(CancellationToken ct = default)
+    {
+        var categorias = await _categoriaRepo.GetAllAsync(ct);
+        return categorias.Select(Map);
+    }
+
+    public async Task<CategoriaResponseDto?> GetByIdAsync(string id, CancellationToken ct = default)
+    {
+        var categoria = await _categoriaRepo.GetByIdAsync(id, ct);
+        return categoria is null ? null : Map(categoria);
+    }
+
+    private static CategoriaResponseDto Map(Categoria c) =>
+        new(c.Id, c.Nome, c.Descricao, c.Icone, c.Cursos.Count);
+}
+
