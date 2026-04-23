@@ -42,8 +42,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                 maxRetryDelay: TimeSpan.FromSeconds(5),
                 errorNumbersToAdd: null);
 
-            // SSL com verificação do certificado CA do Aiven
-            mysqlOptions.SslMode(MySqlSslMode.VerifyCA);
+            // SSL configurado diretamente na connection string (SslMode=VerifyCA;SslCa=...)
+            // O Pomelo não expõe SslMode via MySqlDbContextOptionsBuilder
         }
     )
 );
