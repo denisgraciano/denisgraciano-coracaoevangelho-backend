@@ -28,7 +28,8 @@ public record CursoRequestDto(
     string? CategoriaId,
     string ImagemUrl,
     string Instrutor,
-    bool CertificadoDisponivel
+    bool CertificadoDisponivel,
+    int Vagas
 );
 
 // ── Aula (admin) ──────────────────────────────────────────────

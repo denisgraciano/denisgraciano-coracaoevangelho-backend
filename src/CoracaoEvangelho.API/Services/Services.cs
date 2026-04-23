@@ -709,6 +709,7 @@ public class AdminService : IAdminService
         curso.Instrutor             = dto.Instrutor;
         curso.CertificadoDisponivel = dto.CertificadoDisponivel;
         curso.AtualizadoEm         = DateTime.UtcNow;
+        curso.Vagas = dto.Vagas;
 
         await _cursoRepo.SaveChangesAsync(ct);
         return MapCurso(curso);
