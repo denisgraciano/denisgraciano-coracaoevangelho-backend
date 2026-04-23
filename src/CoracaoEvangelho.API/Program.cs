@@ -1,4 +1,3 @@
-using System.Text;
 using CoracaoEvangelho.API.Data;
 using CoracaoEvangelho.API.Middlewares;
 using CoracaoEvangelho.API.Repositories;
@@ -12,7 +11,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MySqlConnector;
 using Serilog;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,7 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // ── MySQL / EF Core ───────────────────────────────────────────
+// ── MySQL / EF Core ───────────────────────────────────────────
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' não encontrada.");
 
@@ -33,12 +35,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         connectionString,
         ServerVersion.AutoDetect(connectionString),
-        mysqlOptions => mysqlOptions.EnableRetryOnFailure(
-            maxRetryCount:        3,
-            maxRetryDelay:        TimeSpan.FromSeconds(5),
-            errorNumbersToAdd:    null)
+        mysqlOptions =>
+        {
+            mysqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorNumbersToAdd: null);
+
+            // SSL com verificação do certificado CA do Aiven
+            mysqlOptions.SslMode(MySqlSslMode.VerifyCA);
+        }
     )
 );
+
 
 // ── JWT Authentication ────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"]

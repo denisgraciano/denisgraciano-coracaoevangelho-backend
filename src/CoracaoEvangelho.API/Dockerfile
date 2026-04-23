@@ -1,13 +1,14 @@
-# Build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
-COPY . .
-RUN dotnet publish -c Release -o out
 
-# Runtime
+COPY . .
+RUN dotnet restore ./src/CoracaoEvangelho.API/CoracaoEvangelho.API.csproj
+RUN dotnet publish ./src/CoracaoEvangelho.API/CoracaoEvangelho.API.csproj -c Release -o /out
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-COPY --from=build /app/out .
+COPY --from=build /out .
 
 ENV ASPNETCORE_URLS=http://+:$PORT
+
 ENTRYPOINT ["dotnet", "CoracaoEvangelho.API.dll"]

@@ -14,6 +14,8 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+# Certificados SSL
+src/CoracaoEvangelho.API/Certificates/
 # Visual Studio
 .vs/
 *.rsuser
