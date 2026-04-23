@@ -92,3 +92,9 @@ public interface IPedidoVibracaoService
     // Retorna PagedResultDto usando o DTO de admin — sem conflito com Model
     Task<PagedResultDto<PedidoVibracaoAdminDto>> ListarAsync(int pagina, int tamanho, CancellationToken ct = default);
 }
+// ── ICategoriaService ─────────────────────────────────────────
+public interface ICategoriaService
+{
+    Task<IEnumerable<CategoriaResponseDto>> GetAllAsync(CancellationToken ct = default);
+    Task<CategoriaResponseDto?> GetByIdAsync(string id, CancellationToken ct = default);
+}

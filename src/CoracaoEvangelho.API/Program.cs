@@ -96,6 +96,7 @@ builder.Services.AddScoped<IProgressoService,       ProgressoService>();
 builder.Services.AddScoped<ICertificadoService,     CertificadoService>();
 builder.Services.AddScoped<IPedidoVibracaoService,  PedidoVibracaoService>();
 builder.Services.AddScoped<IAdminService,           AdminService>();
+builder.Services.AddScoped<ICategoriaService,       CategoriaService>();
 
 // ── FluentValidation ──────────────────────────────────────────
 builder.Services.AddFluentValidationAutoValidation();
