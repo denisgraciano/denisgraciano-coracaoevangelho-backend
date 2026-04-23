@@ -12,13 +12,13 @@ namespace CoracaoEvangelho.API.Controllers;
 /// Inscrição de alunos em cursos.
 ///
 /// Contrato com Angular:
-/// | Método | Rota                           | Auth    | Componente Angular         |
-/// |--------|--------------------------------|---------|----------------------------|
-/// | POST   | /api/matriculas/{cursoId}      | pública | InscricaoCursoComponent    |
-/// | GET    | /api/matriculas/{cursoId}/check| ✅      | DetalhesCursoComponent     |
+/// | Método | Rota                           | Auth | Componente Angular     |
+/// |--------|--------------------------------|------|------------------------|
+/// | POST   | /api/matriculas/{cursoId}      | ✅   | DetalhesCursoComponent |
+/// | GET    | /api/matriculas/{cursoId}/check| ✅   | DetalhesCursoComponent |
 ///
-/// POST é público: qualquer visitante pode se inscrever sem conta.
-/// O userId é vinculado automaticamente quando o usuário estiver logado.
+/// O usuário precisa estar autenticado para se inscrever.
+/// Os dados do aluno (nome, e-mail) são obtidos do banco via JWT — sem formulário.
 /// </summary>
 [ApiController]
 [Route("api/matriculas")]
@@ -26,36 +26,48 @@ namespace CoracaoEvangelho.API.Controllers;
 public class MatriculaController : ControllerBase
 {
     private readonly IMatriculaService _matriculaService;
+    private readonly IUsuarioService   _usuarioService;
 
-    public MatriculaController(IMatriculaService matriculaService) =>
+    public MatriculaController(
+        IMatriculaService matriculaService,
+        IUsuarioService usuarioService)
+    {
         _matriculaService = matriculaService;
+        _usuarioService   = usuarioService;
+    }
 
-    // Retorna null para requisições anônimas (sem JWT válido)
-    private string? UsuarioIdOuNulo =>
-        User.Identity?.IsAuthenticated == true
-            ? User.FindFirst("userId")?.Value
-            : null;
-
-    // Usado apenas em rotas com [Authorize], onde o claim é garantido
     private string UsuarioId => User.GetUserId();
 
     /// <summary>
-    /// Inscreve o visitante no curso — rota pública, sem necessidade de login.
-    /// Retorna 409 se o mesmo e-mail já estiver inscrito neste curso.
+    /// Inscreve o aluno autenticado no curso — sem necessidade de formulário.
+    /// Os dados do aluno são recuperados automaticamente do banco pelo JWT.
+    /// Retorna 409 se o aluno já estiver inscrito neste curso.
     /// </summary>
     [HttpPost("{cursoId}")]
-    [AllowAnonymous]
-    [SwaggerOperation(Summary = "Inscreve aluno no curso (público)", Tags = new[] { "Matrículas" })]
+    [Authorize]
+    [SwaggerOperation(Summary = "Inscreve aluno autenticado no curso", Tags = new[] { "Matrículas" })]
     [ProducesResponseType(typeof(ApiResponse<InscricaoResponseDto>), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Inscrever(
-        string cursoId,
-        [FromBody] MatriculaRequestDto dto,
-        CancellationToken ct)
+    public async Task<IActionResult> Inscrever(string cursoId, CancellationToken ct)
     {
-        var inscricao = await _matriculaService.InscreverAsync(UsuarioIdOuNulo, cursoId, dto, ct);
+        var usuario = await _usuarioService.GetPerfilAsync(UsuarioId, ct);
+
+        var dto = new MatriculaRequestDto(
+            NomeCompleto:   usuario.Nome,
+            Email:          usuario.Email,
+            Telefone:       null,
+            Cpf:            null,
+            DataNascimento: null,
+            Endereco:       null,
+            Observacoes:    null,
+            AceitaTermos:   true,
+            ReceberEmails:  false,
+            Senha:          null
+        );
+
+        var inscricao = await _matriculaService.InscreverAsync(UsuarioId, cursoId, dto, ct);
         return StatusCode(StatusCodes.Status201Created,
             ApiResponse<InscricaoResponseDto>.Ok(inscricao, "Inscrição realizada com sucesso!"));
     }
